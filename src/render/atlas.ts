@@ -5,7 +5,7 @@ export const ATLAS_SIZE = 512;
 
 /** Pixel x of a texture slot's tile. */
 export function tileX(slot: number): number {
-  return (slot % 16 + (slot > 511 ? 16 : 0)) * 16;
+  return ((slot % 16) + (slot > 511 ? 16 : 0)) * 16;
 }
 
 /** Pixel y of a texture slot's tile. */

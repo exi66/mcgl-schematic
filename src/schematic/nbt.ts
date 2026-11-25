@@ -1,14 +1,6 @@
 // Minimal NBT reader (big-endian, all tag types). Pure TS, no dependencies.
 
-export type NbtValue =
-  | number
-  | bigint
-  | string
-  | Int8Array
-  | Int32Array
-  | BigInt64Array
-  | NbtValue[]
-  | NbtCompound;
+export type NbtValue = number | bigint | string | Int8Array | Int32Array | BigInt64Array | NbtValue[] | NbtCompound;
 
 export interface NbtCompound {
   [key: string]: NbtValue;

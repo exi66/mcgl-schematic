@@ -1,7 +1,15 @@
 // Small shadcn-style components (Tailwind + Radix primitives).
 
 import { clsx, type ClassValue } from 'clsx';
-import { Dialog as DialogPrimitive, Popover as PopoverPrimitive, ScrollArea as ScrollAreaPrimitive, Slider as SliderPrimitive, Switch as SwitchPrimitive, ToggleGroup as ToggleGroupPrimitive, Tooltip as TooltipPrimitive } from 'radix-ui';
+import {
+  Dialog as DialogPrimitive,
+  Popover as PopoverPrimitive,
+  ScrollArea as ScrollAreaPrimitive,
+  Slider as SliderPrimitive,
+  Switch as SwitchPrimitive,
+  ToggleGroup as ToggleGroupPrimitive,
+  Tooltip as TooltipPrimitive,
+} from 'radix-ui';
 import { X } from 'lucide-react';
 import type { ComponentProps, ReactNode } from 'react';
 import { twMerge } from 'tailwind-merge';
@@ -17,7 +25,12 @@ const buttonVariants: Record<ButtonVariant, string> = {
   ghost: 'hover:bg-muted',
 };
 
-export function Button({ className, variant = 'default', size = 'md', ...props }: ComponentProps<'button'> & { variant?: ButtonVariant; size?: 'sm' | 'md' | 'icon' }) {
+export function Button({
+  className,
+  variant = 'default',
+  size = 'md',
+  ...props
+}: ComponentProps<'button'> & { variant?: ButtonVariant; size?: 'sm' | 'md' | 'icon' }) {
   return (
     <button
       className={cn(
@@ -38,10 +51,16 @@ export function Slider({ className, orientation, ...props }: ComponentProps<type
   return (
     <SliderPrimitive.Root
       orientation={orientation}
-      className={cn('relative flex touch-none items-center select-none', vertical ? 'h-full w-5 flex-col px-2' : 'w-full py-2', className)}
+      className={cn(
+        'relative flex touch-none items-center select-none',
+        vertical ? 'h-full w-5 flex-col px-2' : 'w-full py-2',
+        className,
+      )}
       {...props}
     >
-      <SliderPrimitive.Track className={cn('relative grow overflow-hidden rounded-full bg-muted', vertical ? 'w-1.5' : 'h-1.5 w-full')}>
+      <SliderPrimitive.Track
+        className={cn('relative grow overflow-hidden rounded-full bg-muted', vertical ? 'w-1.5' : 'h-1.5 w-full')}
+      >
         <SliderPrimitive.Range className={cn('absolute bg-primary', vertical ? 'w-full' : 'h-full')} />
       </SliderPrimitive.Track>
       <SliderPrimitive.Thumb
@@ -66,7 +85,17 @@ export function Switch({ className, ...props }: ComponentProps<typeof SwitchPrim
   );
 }
 
-export function Segmented<T extends string>({ value, onChange, items, className }: { value: T; onChange: (v: T) => void; items: { value: T; label: ReactNode; title?: string }[]; className?: string }) {
+export function Segmented<T extends string>({
+  value,
+  onChange,
+  items,
+  className,
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  items: { value: T; label: ReactNode; title?: string }[];
+  className?: string;
+}) {
   return (
     <ToggleGroupPrimitive.Root
       type="single"
@@ -93,7 +122,10 @@ export function Tip({ content, children }: { content: ReactNode; children: React
     <TooltipPrimitive.Root>
       <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
       <TooltipPrimitive.Portal>
-        <TooltipPrimitive.Content sideOffset={6} className="z-50 rounded-md bg-foreground px-2 py-1 text-xs text-background shadow">
+        <TooltipPrimitive.Content
+          sideOffset={6}
+          className="z-50 rounded-md bg-foreground px-2 py-1 text-xs text-background shadow"
+        >
           {content}
         </TooltipPrimitive.Content>
       </TooltipPrimitive.Portal>
@@ -106,32 +138,63 @@ export const TooltipProvider = TooltipPrimitive.Provider;
 export const Popover = PopoverPrimitive.Root;
 export const PopoverTrigger = PopoverPrimitive.Trigger;
 
-export function PopoverContent({ className, sideOffset = 8, ...props }: ComponentProps<typeof PopoverPrimitive.Content>) {
+export function PopoverContent({
+  className,
+  sideOffset = 8,
+  ...props
+}: ComponentProps<typeof PopoverPrimitive.Content>) {
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
         sideOffset={sideOffset}
-        className={cn('z-50 w-64 rounded-lg border bg-popover p-3 text-sm text-popover-foreground shadow-lg outline-none', className)}
+        className={cn(
+          'z-50 w-64 rounded-lg border bg-popover p-3 text-sm text-popover-foreground shadow-lg outline-none',
+          className,
+        )}
         {...props}
       />
     </PopoverPrimitive.Portal>
   );
 }
 
-export function Dialog({ open, onOpenChange, title, description, children, className }: { open: boolean; onOpenChange: (o: boolean) => void; title: ReactNode; description?: ReactNode; children: ReactNode; className?: string }) {
+export function Dialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+  className,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  title: ReactNode;
+  description?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50" />
         <DialogPrimitive.Content
-          className={cn('fixed top-1/2 left-1/2 z-50 max-h-[90vh] w-[min(760px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border bg-popover text-popover-foreground shadow-xl outline-none', className)}
+          className={cn(
+            'fixed top-1/2 left-1/2 z-50 max-h-[90vh] w-[min(760px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto border bg-popover text-popover-foreground shadow-xl outline-none',
+            className,
+          )}
         >
           <div className="flex items-start justify-between gap-4 border-b px-5 py-4">
             <div>
               <DialogPrimitive.Title className="text-base font-semibold">{title}</DialogPrimitive.Title>
-              {description && <DialogPrimitive.Description className="mt-1 text-sm text-muted-foreground">{description}</DialogPrimitive.Description>}
+              {description && (
+                <DialogPrimitive.Description className="mt-1 text-sm text-muted-foreground">
+                  {description}
+                </DialogPrimitive.Description>
+              )}
             </div>
-            <DialogPrimitive.Close className="text-muted-foreground hover:text-foreground [&_svg]:size-4" aria-label="Закрыть">
+            <DialogPrimitive.Close
+              className="text-muted-foreground hover:text-foreground [&_svg]:size-4"
+              aria-label="Закрыть"
+            >
               <X />
             </DialogPrimitive.Close>
           </div>
@@ -143,11 +206,20 @@ export function Dialog({ open, onOpenChange, title, description, children, class
 }
 
 export function Kbd({ children }: { children: ReactNode }) {
-  return <kbd className="inline-flex h-6 min-w-6 items-center justify-center border bg-muted px-1.5 font-mono text-[11px] font-medium shadow-[0_1px_0_var(--border)]">{children}</kbd>;
+  return (
+    <kbd className="inline-flex h-6 min-w-6 items-center justify-center border bg-muted px-1.5 font-mono text-[11px] font-medium shadow-[0_1px_0_var(--border)]">
+      {children}
+    </kbd>
+  );
 }
 
 /** shadcn ScrollArea: native scrolling with a thin custom scrollbar. */
-export function ScrollArea({ className, viewportClassName, children, ...props }: ComponentProps<typeof ScrollAreaPrimitive.Root> & { viewportClassName?: string }) {
+export function ScrollArea({
+  className,
+  viewportClassName,
+  children,
+  ...props
+}: ComponentProps<typeof ScrollAreaPrimitive.Root> & { viewportClassName?: string }) {
   return (
     <ScrollAreaPrimitive.Root data-slot="scroll-area" className={cn('relative overflow-hidden', className)} {...props}>
       <ScrollAreaPrimitive.Viewport
@@ -162,7 +234,11 @@ export function ScrollArea({ className, viewportClassName, children, ...props }:
   );
 }
 
-export function ScrollBar({ className, orientation = 'vertical', ...props }: ComponentProps<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>) {
+export function ScrollBar({
+  className,
+  orientation = 'vertical',
+  ...props
+}: ComponentProps<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>) {
   return (
     <ScrollAreaPrimitive.ScrollAreaScrollbar
       data-slot="scroll-area-scrollbar"
@@ -175,7 +251,10 @@ export function ScrollBar({ className, orientation = 'vertical', ...props }: Com
       )}
       {...props}
     >
-      <ScrollAreaPrimitive.ScrollAreaThumb data-slot="scroll-area-thumb" className="relative flex-1 bg-border hover:bg-muted-foreground/40" />
+      <ScrollAreaPrimitive.ScrollAreaThumb
+        data-slot="scroll-area-thumb"
+        className="relative flex-1 bg-border hover:bg-muted-foreground/40"
+      />
     </ScrollAreaPrimitive.ScrollAreaScrollbar>
   );
 }

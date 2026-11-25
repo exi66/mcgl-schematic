@@ -15,7 +15,8 @@ interface XmlEl {
 export function parseXml(text: string): XmlEl {
   const root: XmlEl = { name: '#root', attrs: {}, children: [] };
   const stack: XmlEl[] = [root];
-  const re = /<(\/?)([A-Za-z_][\w.-]*)((?:\s+[\w:.-]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>|<\?[\s\S]*?\?>|<!--[\s\S]*?-->/g;
+  const re =
+    /<(\/?)([A-Za-z_][\w.-]*)((?:\s+[\w:.-]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>|<\?[\s\S]*?\?>|<!--[\s\S]*?-->/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text))) {
     if (!m[2]) continue; // declaration or comment
@@ -69,7 +70,15 @@ function vec(el: XmlEl | undefined, d: number): V3 {
 }
 
 /** UV corners of a face rectangle, as the client computes them (transform: rotation/flip bits). */
-export function unwrapCorners(x: number, y: number, w: number, h: number, tw: number, th: number, transform: number): FaceUv {
+export function unwrapCorners(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  tw: number,
+  th: number,
+  transform: number,
+): FaceUv {
   let c0: [number, number], c1: [number, number], c2: [number, number], c3: [number, number];
   if (transform === 0) {
     c0 = [(x + w) / tw, (y + h) / th];
@@ -86,29 +95,56 @@ export function unwrapCorners(x: number, y: number, w: number, h: number, tw: nu
     if (kind === 1) {
       if (flipB) a = h;
       if (flipA) b = w;
-      u0 = x - h + a; v0 = y - b; u1 = x + a; v1 = y + w - b;
+      u0 = x - h + a;
+      v0 = y - b;
+      u1 = x + a;
+      v1 = y + w - b;
     } else if (kind === 2) {
       if (flipA) a = w;
       if (flipB) b = h;
-      u0 = x - w + a; v0 = y - h + b; u1 = x + a; v1 = y + b;
+      u0 = x - w + a;
+      v0 = y - h + b;
+      u1 = x + a;
+      v1 = y + b;
     } else if (kind === 4) {
       if (flipB) a = h;
       if (flipA) b = w;
-      u0 = x - a; v0 = y - w + b; u1 = x + h - a; v1 = y + b;
+      u0 = x - a;
+      v0 = y - w + b;
+      u1 = x + h - a;
+      v1 = y + b;
     } else {
       if (flipA) a = w;
       if (flipB) b = h;
-      u0 = x - a; v0 = y - b; u1 = x + w - a; v1 = y + h - b;
+      u0 = x - a;
+      v0 = y - b;
+      u1 = x + w - a;
+      v1 = y + h - b;
     }
-    u0 /= tw; u1 /= tw; v0 /= th; v1 /= th;
+    u0 /= tw;
+    u1 /= tw;
+    v0 /= th;
+    v1 /= th;
     if (kind === 1) {
-      c0 = [u0, v1]; c1 = [u1, v1]; c2 = [u1, v0]; c3 = [u0, v0];
+      c0 = [u0, v1];
+      c1 = [u1, v1];
+      c2 = [u1, v0];
+      c3 = [u0, v0];
     } else if (kind === 2) {
-      c0 = [u0, v0]; c1 = [u0, v1]; c2 = [u1, v1]; c3 = [u1, v0];
+      c0 = [u0, v0];
+      c1 = [u0, v1];
+      c2 = [u1, v1];
+      c3 = [u1, v0];
     } else if (kind === 4) {
-      c0 = [u1, v0]; c1 = [u0, v0]; c2 = [u0, v1]; c3 = [u1, v1];
+      c0 = [u1, v0];
+      c1 = [u0, v0];
+      c2 = [u0, v1];
+      c3 = [u1, v1];
     } else {
-      c0 = [u1, v1]; c1 = [u1, v0]; c2 = [u0, v0]; c3 = [u0, v1];
+      c0 = [u1, v1];
+      c1 = [u1, v0];
+      c2 = [u0, v0];
+      c3 = [u0, v1];
     }
     if (flipA) [c0, c1, c2, c3] = [c3, c2, c1, c0];
     if (flipB) [c0, c1, c2, c3] = [c1, c0, c3, c2];
@@ -143,9 +179,16 @@ function parseNode(el: XmlEl, tw: number, th: number): ModelNode {
   for (let i = 0; i < 6; i++) {
     const f = unwrap?.children.find((c) => c.name.toLowerCase() === `num${i}`);
     if (f) {
-      node.faces.push(unwrapCorners(num(f.attrs.x), num(f.attrs.y), dims[i][0], dims[i][1], tw, th, num(f.attrs.transform)));
+      node.faces.push(
+        unwrapCorners(num(f.attrs.x), num(f.attrs.y), dims[i][0], dims[i][1], tw, th, num(f.attrs.transform)),
+      );
     } else {
-      node.faces.push([{ u: 0, v: 0 }, { u: 0, v: 0 }, { u: 0, v: 0 }, { u: 0, v: 0 }]);
+      node.faces.push([
+        { u: 0, v: 0 },
+        { u: 0, v: 0 },
+        { u: 0, v: 0 },
+        { u: 0, v: 0 },
+      ]);
     }
   }
   for (const c of el.children) if (c.name.toLowerCase() === 'node') node.children.push(parseNode(c, tw, th));
@@ -205,7 +248,24 @@ function quatMatrix([w, qx, qy, qz]: [number, number, number, number]): M4 {
   const v2 = w * v11;
   const v3 = w * v12;
   const v4 = w * v13;
-  return [1 - (v6 + v10), v8 - v4, v9 + v3, 0, v8 + v4, 1 - (v5 + v10), v7 - v2, 0, v9 - v3, v7 + v2, 1 - (v5 + v6), 0, 0, 0, 0, 1];
+  return [
+    1 - (v6 + v10),
+    v8 - v4,
+    v9 + v3,
+    0,
+    v8 + v4,
+    1 - (v5 + v10),
+    v7 - v2,
+    0,
+    v9 - v3,
+    v7 + v2,
+    1 - (v5 + v6),
+    0,
+    0,
+    0,
+    0,
+    1,
+  ];
 }
 
 function apply(m: M4, p: V3): V3 {
@@ -233,24 +293,74 @@ export function buildModelGeometry(def: ModelDef): GeoArrays {
     let m = translate(parent, node.position);
     m = mul(m, quatMatrix(node.orientation));
     const c = node.offset;
-    const hx = (node.size[0] / 16) * Math.abs(node.scale[0]) / 2;
-    const hy = (node.size[1] / 16) * Math.abs(node.scale[1]) / 2;
-    const hz = (node.size[2] / 16) * Math.abs(node.scale[2]) / 2;
-    const nx = node.scale[0] < 0, ny = node.scale[1] < 0, nz = node.scale[2] < 0;
+    const hx = ((node.size[0] / 16) * Math.abs(node.scale[0])) / 2;
+    const hy = ((node.size[1] / 16) * Math.abs(node.scale[1])) / 2;
+    const hz = ((node.size[2] / 16) * Math.abs(node.scale[2])) / 2;
+    const nx = node.scale[0] < 0,
+      ny = node.scale[1] < 0,
+      nz = node.scale[2] < 0;
     const F = node.faces;
     const quads: [FaceUv, V3[]][] = [
       // +Z
-      [swapCorners(F[nz ? 1 : 0], nx, ny), [[hx, -hy, hz], [hx, hy, hz], [-hx, hy, hz], [-hx, -hy, hz]]],
+      [
+        swapCorners(F[nz ? 1 : 0], nx, ny),
+        [
+          [hx, -hy, hz],
+          [hx, hy, hz],
+          [-hx, hy, hz],
+          [-hx, -hy, hz],
+        ],
+      ],
       // −Z
-      [swapCorners(F[nz ? 0 : 1], nx, ny), [[-hx, -hy, -hz], [-hx, hy, -hz], [hx, hy, -hz], [hx, -hy, -hz]]],
+      [
+        swapCorners(F[nz ? 0 : 1], nx, ny),
+        [
+          [-hx, -hy, -hz],
+          [-hx, hy, -hz],
+          [hx, hy, -hz],
+          [hx, -hy, -hz],
+        ],
+      ],
       // +X
-      [swapCorners(F[nx ? 4 : 2], nz, ny), [[hx, -hy, -hz], [hx, hy, -hz], [hx, hy, hz], [hx, -hy, hz]]],
+      [
+        swapCorners(F[nx ? 4 : 2], nz, ny),
+        [
+          [hx, -hy, -hz],
+          [hx, hy, -hz],
+          [hx, hy, hz],
+          [hx, -hy, hz],
+        ],
+      ],
       // −Y
-      [swapCorners(F[ny ? 5 : 3], nx, nz), [[hx, -hy, -hz], [hx, -hy, hz], [-hx, -hy, hz], [-hx, -hy, -hz]]],
+      [
+        swapCorners(F[ny ? 5 : 3], nx, nz),
+        [
+          [hx, -hy, -hz],
+          [hx, -hy, hz],
+          [-hx, -hy, hz],
+          [-hx, -hy, -hz],
+        ],
+      ],
       // −X
-      [swapCorners(F[nx ? 2 : 4], nz, ny), [[-hx, -hy, hz], [-hx, hy, hz], [-hx, hy, -hz], [-hx, -hy, -hz]]],
+      [
+        swapCorners(F[nx ? 2 : 4], nz, ny),
+        [
+          [-hx, -hy, hz],
+          [-hx, hy, hz],
+          [-hx, hy, -hz],
+          [-hx, -hy, -hz],
+        ],
+      ],
       // +Y
-      [swapCorners(F[ny ? 3 : 5], nx, nz), [[hx, hy, hz], [hx, hy, -hz], [-hx, hy, -hz], [-hx, hy, hz]]],
+      [
+        swapCorners(F[ny ? 3 : 5], nx, nz),
+        [
+          [hx, hy, hz],
+          [hx, hy, -hz],
+          [-hx, hy, -hz],
+          [-hx, hy, hz],
+        ],
+      ],
     ];
     for (const [uv, pts] of quads) {
       const w = pts.map((p) => apply(m, [p[0] + c[0], p[1] + c[1], p[2] + c[2]]));
@@ -268,11 +378,19 @@ export function buildModelGeometry(def: ModelDef): GeoArrays {
 
 /** Face shade from its normal, blending the game's per-axis shades. */
 function shadeFor(p: V3[]): [number, number, number] {
-  const ax = p[1][0] - p[0][0], ay = p[1][1] - p[0][1], az = p[1][2] - p[0][2];
-  const bx = p[2][0] - p[0][0], by = p[2][1] - p[0][1], bz = p[2][2] - p[0][2];
-  let nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx;
+  const ax = p[1][0] - p[0][0],
+    ay = p[1][1] - p[0][1],
+    az = p[1][2] - p[0][2];
+  const bx = p[2][0] - p[0][0],
+    by = p[2][1] - p[0][1],
+    bz = p[2][2] - p[0][2];
+  let nx = ay * bz - az * by,
+    ny = az * bx - ax * bz,
+    nz = ax * by - ay * bx;
   const len = Math.hypot(nx, ny, nz) || 1;
-  nx /= len; ny /= len; nz /= len;
+  nx /= len;
+  ny /= len;
+  nz /= len;
   const s = nx * nx * 0.6 + nz * nz * 0.8 + ny * ny * (ny > 0 ? 1 : 0.5);
   return [s, s, s];
 }

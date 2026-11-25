@@ -3,7 +3,21 @@
 
 import { BLOCKS, ELECTRIC_CONNECT, REDSTONE_PROVIDERS, TUBE_CONNECT, type BlockDef, type Side } from '../blocks/pool';
 import { tileX, tileY } from './atlas';
-import { box, drawBox, faceBottom, faceNegX, faceNegZ, facePosX, facePosZ, faceTop, FULL, NO_ROT, SHADE, type Bounds, type UvRot } from './faces';
+import {
+  box,
+  drawBox,
+  faceBottom,
+  faceNegX,
+  faceNegZ,
+  facePosX,
+  facePosZ,
+  faceTop,
+  FULL,
+  NO_ROT,
+  SHADE,
+  type Bounds,
+  type UvRot,
+} from './faces';
 import { GeoBuilder, type GeoArrays } from './geometry';
 import { drawTransportPipe, setOpaqueTest } from './transport';
 
@@ -139,7 +153,13 @@ export function meshRegion(v: Voxels, r: Region): MeshOutput {
             break;
         }
       }
-  return { solid: solid.build(), cutout: cutout.build(), translucent: translucent.build(), unknown: unknown.build(), models };
+  return {
+    solid: solid.build(),
+    cutout: cutout.build(),
+    translucent: translucent.build(),
+    unknown: unknown.build(),
+    models,
+  };
 }
 
 interface Ctx {
@@ -167,11 +187,39 @@ function sideVisible(v: Voxels, x: number, y: number, z: number, s: number, b: B
 }
 
 function drawCube(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: number, meta: number): void {
-  drawBox(g, x, y, z, FULL, (s) => d.tex(s as Side, meta), (s) => sideVisible(c.v, x, y, z, s, FULL, d.id));
+  drawBox(
+    g,
+    x,
+    y,
+    z,
+    FULL,
+    (s) => d.tex(s as Side, meta),
+    (s) => sideVisible(c.v, x, y, z, s, FULL, d.id),
+  );
 }
 
-function drawBounded(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: number, meta: number, b: Bounds, rot: UvRot = NO_ROT, all = false): void {
-  drawBox(g, x, y, z, b, (s) => d.tex(s as Side, meta), all ? () => true : (s) => sideVisible(c.v, x, y, z, s, b, d.id), rot);
+function drawBounded(
+  c: Ctx,
+  g: GeoBuilder,
+  d: BlockDef,
+  x: number,
+  y: number,
+  z: number,
+  meta: number,
+  b: Bounds,
+  rot: UvRot = NO_ROT,
+  all = false,
+): void {
+  drawBox(
+    g,
+    x,
+    y,
+    z,
+    b,
+    (s) => d.tex(s as Side, meta),
+    all ? () => true : (s) => sideVisible(c.v, x, y, z, s, b, d.id),
+    rot,
+  );
 }
 
 // ── Unknown blocks ───────────────────────────────────────────────────────────
@@ -186,25 +234,48 @@ function drawUnknown(g: GeoBuilder, v: Voxels, x: number, y: number, z: number, 
   for (let s = 0; s < 6; s++) {
     if (isOpaque(v.id(x + DX[s], y + DY[s], z + DZ[s]))) continue;
     g.color(shade[s], shade[s], shade[s]);
-    const X0 = x, X1 = x + 1, Y0 = y, Y1 = y + 1, Z0 = z, Z1 = z + 1;
+    const X0 = x,
+      X1 = x + 1,
+      Y0 = y,
+      Y1 = y + 1,
+      Z0 = z,
+      Z1 = z + 1;
     switch (s) {
       case 0:
-        g.vertex(X0, Y0, Z1, u0, v1); g.vertex(X0, Y0, Z0, u0, v0); g.vertex(X1, Y0, Z0, u1, v0); g.vertex(X1, Y0, Z1, u1, v1);
+        g.vertex(X0, Y0, Z1, u0, v1);
+        g.vertex(X0, Y0, Z0, u0, v0);
+        g.vertex(X1, Y0, Z0, u1, v0);
+        g.vertex(X1, Y0, Z1, u1, v1);
         break;
       case 1:
-        g.vertex(X1, Y1, Z1, u1, v1); g.vertex(X1, Y1, Z0, u1, v0); g.vertex(X0, Y1, Z0, u0, v0); g.vertex(X0, Y1, Z1, u0, v1);
+        g.vertex(X1, Y1, Z1, u1, v1);
+        g.vertex(X1, Y1, Z0, u1, v0);
+        g.vertex(X0, Y1, Z0, u0, v0);
+        g.vertex(X0, Y1, Z1, u0, v1);
         break;
       case 2:
-        g.vertex(X0, Y1, Z0, u1, v0); g.vertex(X1, Y1, Z0, u0, v0); g.vertex(X1, Y0, Z0, u0, v1); g.vertex(X0, Y0, Z0, u1, v1);
+        g.vertex(X0, Y1, Z0, u1, v0);
+        g.vertex(X1, Y1, Z0, u0, v0);
+        g.vertex(X1, Y0, Z0, u0, v1);
+        g.vertex(X0, Y0, Z0, u1, v1);
         break;
       case 3:
-        g.vertex(X0, Y1, Z1, u0, v0); g.vertex(X0, Y0, Z1, u0, v1); g.vertex(X1, Y0, Z1, u1, v1); g.vertex(X1, Y1, Z1, u1, v0);
+        g.vertex(X0, Y1, Z1, u0, v0);
+        g.vertex(X0, Y0, Z1, u0, v1);
+        g.vertex(X1, Y0, Z1, u1, v1);
+        g.vertex(X1, Y1, Z1, u1, v0);
         break;
       case 4:
-        g.vertex(X0, Y1, Z1, u1, v0); g.vertex(X0, Y1, Z0, u0, v0); g.vertex(X0, Y0, Z0, u0, v1); g.vertex(X0, Y0, Z1, u1, v1);
+        g.vertex(X0, Y1, Z1, u1, v0);
+        g.vertex(X0, Y1, Z0, u0, v0);
+        g.vertex(X0, Y0, Z0, u0, v1);
+        g.vertex(X0, Y0, Z1, u1, v1);
         break;
       case 5:
-        g.vertex(X1, Y0, Z1, u0, v1); g.vertex(X1, Y0, Z0, u1, v1); g.vertex(X1, Y1, Z0, u1, v0); g.vertex(X1, Y1, Z1, u0, v0);
+        g.vertex(X1, Y0, Z1, u0, v1);
+        g.vertex(X1, Y0, Z0, u1, v1);
+        g.vertex(X1, Y1, Z0, u1, v0);
+        g.vertex(X1, Y1, Z1, u0, v0);
         break;
     }
   }
@@ -333,13 +404,33 @@ function drawFluid(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: 
     const V = tileY(tex);
     let ha: number, hb: number, xa: number, xb: number, za: number, zb: number;
     if (i === 0) {
-      ha = h00; hb = h10; xa = x; xb = x + 1; za = z; zb = z;
+      ha = h00;
+      hb = h10;
+      xa = x;
+      xb = x + 1;
+      za = z;
+      zb = z;
     } else if (i === 1) {
-      ha = h11; hb = h01; xa = x + 1; xb = x; za = z + 1; zb = z + 1;
+      ha = h11;
+      hb = h01;
+      xa = x + 1;
+      xb = x;
+      za = z + 1;
+      zb = z + 1;
     } else if (i === 2) {
-      ha = h01; hb = h00; xa = x; xb = x; za = z + 1; zb = z;
+      ha = h01;
+      hb = h00;
+      xa = x;
+      xb = x;
+      za = z + 1;
+      zb = z;
     } else {
-      ha = h10; hb = h11; xa = x + 1; xb = x + 1; za = z; zb = z + 1;
+      ha = h10;
+      hb = h11;
+      xa = x + 1;
+      xb = x + 1;
+      za = z;
+      zb = z + 1;
     }
     const u0 = U / A;
     const u1 = (U + 16 - 0.01) / A;
@@ -377,7 +468,16 @@ function electricConnects(v: Voxels, x: number, y: number, z: number): boolean {
   return ELECTRIC_CONNECT.has(v.id(x, y, z));
 }
 
-function drawWire(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: number, meta: number, electric: boolean): void {
+function drawWire(
+  c: Ctx,
+  g: GeoBuilder,
+  d: BlockDef,
+  x: number,
+  y: number,
+  z: number,
+  meta: number,
+  electric: boolean,
+): void {
   const v = c.v;
   const self = d.id;
   const conn = (cx: number, cy: number, cz: number, dir: number) =>
@@ -393,7 +493,10 @@ function drawWire(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: n
   const tex = d.tex(1, meta);
   const U = tileX(tex);
   const V = tileY(tex);
-  let u15 = U / A, u17 = (U + 15.99) / A, v19 = V / A, v21 = (V + 15.99) / A;
+  let u15 = U / A,
+    u17 = (U + 15.99) / A,
+    v19 = V / A,
+    v21 = (V + 15.99) / A;
 
   let w = conn(x - 1, y, z, 1) || (!normalCube(v, x - 1, y, z) && conn(x - 1, y - 1, z, -1));
   let e = conn(x + 1, y, z, 3) || (!normalCube(v, x + 1, y, z) && conn(x + 1, y - 1, z, -1));
@@ -406,7 +509,10 @@ function drawWire(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: n
     if (normalCube(v, x, y, z + 1) && conn(x, y + 1, z + 1, -1)) s = true;
   }
 
-  let x0 = x, x1 = x + 1, z0 = z, z1 = z + 1;
+  let x0 = x,
+    x1 = x + 1,
+    z0 = z,
+    z1 = z + 1;
   let shape = 0;
   if ((w || e) && !n && !s) shape = 1;
   if ((n || s) && !e && !w) shape = 2;
@@ -430,10 +536,22 @@ function drawWire(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: n
     }
   };
   if (shape === 0 && (w || e || n || s)) {
-    if (!w) { x0 += 0.3125; u15 += 0.009765625; }
-    if (!e) { x1 -= 0.3125; u17 -= 0.009765625; }
-    if (!n) { z0 += 0.3125; v19 += 0.009765625; }
-    if (!s) { z1 -= 0.3125; v21 -= 0.009765625; }
+    if (!w) {
+      x0 += 0.3125;
+      u15 += 0.009765625;
+    }
+    if (!e) {
+      x1 -= 0.3125;
+      u17 -= 0.009765625;
+    }
+    if (!n) {
+      z0 += 0.3125;
+      v19 += 0.009765625;
+    }
+    if (!s) {
+      z1 -= 0.3125;
+      v21 -= 0.009765625;
+    }
   }
   g.color(...tint);
   quad(0);
@@ -442,7 +560,10 @@ function drawWire(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: n
 
   // Wire climbing up the side of a block.
   if (!normalCube(v, x, y + 1, z)) {
-    const lu0 = (U + 16) / A, lu1 = (U + 16 + 15.99) / A, lv0 = V / A, lv1 = (V + 15.99) / A;
+    const lu0 = (U + 16) / A,
+      lu1 = (U + 16 + 15.99) / A,
+      lv0 = V / A,
+      lv1 = (V + 15.99) / A;
     const top = y + 1 + 0.021875;
     const wall = (pts: [number, number, number, number, number][]) => {
       for (const o of [0, off]) {
@@ -454,19 +575,39 @@ function drawWire(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: n
     const climb = (cx: number, cz: number) => normalCube(v, cx, y, cz) && v.id(cx, y + 1, cz) === self;
     if (climb(x - 1, z)) {
       const X = x + 0.015625;
-      wall([[X, top, z + 1, lu1, lv0], [X, y, z + 1, lu0, lv0], [X, y, z, lu0, lv1], [X, top, z, lu1, lv1]]);
+      wall([
+        [X, top, z + 1, lu1, lv0],
+        [X, y, z + 1, lu0, lv0],
+        [X, y, z, lu0, lv1],
+        [X, top, z, lu1, lv1],
+      ]);
     }
     if (climb(x + 1, z)) {
       const X = x + 1 - 0.015625;
-      wall([[X, y, z + 1, lu0, lv1], [X, top, z + 1, lu1, lv1], [X, top, z, lu1, lv0], [X, y, z, lu0, lv0]]);
+      wall([
+        [X, y, z + 1, lu0, lv1],
+        [X, top, z + 1, lu1, lv1],
+        [X, top, z, lu1, lv0],
+        [X, y, z, lu0, lv0],
+      ]);
     }
     if (climb(x, z - 1)) {
       const Z = z + 0.015625;
-      wall([[x + 1, y, Z, lu0, lv1], [x + 1, top, Z, lu1, lv1], [x, top, Z, lu1, lv0], [x, y, Z, lu0, lv0]]);
+      wall([
+        [x + 1, y, Z, lu0, lv1],
+        [x + 1, top, Z, lu1, lv1],
+        [x, top, Z, lu1, lv0],
+        [x, y, Z, lu0, lv0],
+      ]);
     }
     if (climb(x, z + 1)) {
       const Z = z + 1 - 0.015625;
-      wall([[x + 1, top, Z, lu1, lv0], [x + 1, y, Z, lu0, lv0], [x, y, Z, lu0, lv1], [x, top, Z, lu1, lv1]]);
+      wall([
+        [x + 1, top, Z, lu1, lv0],
+        [x + 1, y, Z, lu0, lv0],
+        [x, y, Z, lu0, lv1],
+        [x, top, Z, lu1, lv1],
+      ]);
     }
   }
 }
@@ -477,12 +618,20 @@ function drawWire(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: n
 function torchAt(g: GeoBuilder, tex: number, x: number, y: number, z: number, dx: number, dz: number): void {
   const U = tileX(tex);
   const V = tileY(tex);
-  const u16 = U / A, u17 = (U + 15.99) / A, v18 = V / A, v19 = (V + 15.99) / A;
-  const u20 = u16 + 7 / A, v22 = v18 + 6 / A;
-  const u24 = u16 + 9 / A, v26 = v18 + 8 / A;
+  const u16 = U / A,
+    u17 = (U + 15.99) / A,
+    v18 = V / A,
+    v19 = (V + 15.99) / A;
+  const u20 = u16 + 7 / A,
+    v22 = v18 + 6 / A;
+  const u24 = u16 + 9 / A,
+    v26 = v18 + 8 / A;
   x += 0.5;
   z += 0.5;
-  const x28 = x - 0.5, x30 = x + 0.5, z32 = z - 0.5, z34 = z + 0.5;
+  const x28 = x - 0.5,
+    x30 = x + 0.5,
+    z32 = z - 0.5,
+    z34 = z + 0.5;
   const w = 0.0625;
   const h = 0.625;
   g.color(1, 1, 1);
@@ -523,7 +672,8 @@ function drawTorch(g: GeoBuilder, d: BlockDef, x: number, y: number, z: number, 
 }
 
 function rotX(p: number[], a: number): void {
-  const c = Math.cos(a), s = Math.sin(a);
+  const c = Math.cos(a),
+    s = Math.sin(a);
   const y = p[1] * c + p[2] * s;
   const z = p[2] * c - p[1] * s;
   p[1] = y;
@@ -531,7 +681,8 @@ function rotX(p: number[], a: number): void {
 }
 
 function rotY(p: number[], a: number): void {
-  const c = Math.cos(a), s = Math.sin(a);
+  const c = Math.cos(a),
+    s = Math.sin(a);
   const x = p[0] * c + p[2] * s;
   const z = p[2] * c - p[0] * s;
   p[0] = x;
@@ -541,7 +692,9 @@ function rotY(p: number[], a: number): void {
 function drawLever(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: number, meta: number): void {
   const dir = meta & 7;
   const on = (meta & 8) !== 0;
-  const a = 0.25, b = 0.1875, h = 0.1875;
+  const a = 0.25,
+    b = 0.1875,
+    h = 0.1875;
   let base: Bounds | undefined;
   if (dir === 7) base = box(0.5 - b, 1 - h, 0.5 - a, 0.5 + b, 1, 0.5 + a);
   else if (dir === 5) base = box(0.5 - b, 0, 0.5 - a, 0.5 + b, h, 0.5 + a);
@@ -551,15 +704,31 @@ function drawLever(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: 
   else if (dir === 2) base = box(1 - h, 0.5 - a, 0.5 - b, 1, 0.5 + a, 0.5 + b);
   else if (dir === 1) base = box(0, 0.5 - a, 0.5 - b, h, 0.5 + a, 0.5 + b);
   // The base uses the cobblestone texture.
-  if (base) drawBox(g, x, y, z, base, () => 16, (s) => sideVisible(c.v, x, y, z, s, base!, d.id));
+  if (base)
+    drawBox(
+      g,
+      x,
+      y,
+      z,
+      base,
+      () => 16,
+      (s) => sideVisible(c.v, x, y, z, s, base!, d.id),
+    );
 
   const tex = d.tex(0, meta);
   const U = tileX(tex);
   const V = tileY(tex);
-  const w = 0.0625, hh = 0.625;
+  const w = 0.0625,
+    hh = 0.625;
   const pts = [
-    [-w, 0, -w], [w, 0, -w], [w, 0, w], [-w, 0, w],
-    [-w, hh, -w], [w, hh, -w], [w, hh, w], [-w, hh, w],
+    [-w, 0, -w],
+    [w, 0, -w],
+    [w, 0, w],
+    [-w, 0, w],
+    [-w, hh, -w],
+    [w, hh, -w],
+    [w, hh, w],
+    [-w, hh, w],
   ];
   for (const p of pts) {
     if (on) {
@@ -572,7 +741,9 @@ function drawLever(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: 
     if (dir === 6) rotY(p, Math.PI / 2);
     if (dir === 7) {
       rotX(p, Math.PI);
-      p[0] += x + 0.5; p[1] += y + 1 - 0.125; p[2] += z + 0.5;
+      p[0] += x + 0.5;
+      p[1] += y + 1 - 0.125;
+      p[2] += z + 0.5;
     } else if (dir < 5) {
       p[1] -= 0.375;
       rotX(p, Math.PI / 2);
@@ -580,15 +751,27 @@ function drawLever(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: 
       if (dir === 3) rotY(p, Math.PI);
       if (dir === 2) rotY(p, Math.PI / 2);
       if (dir === 1) rotY(p, -Math.PI / 2);
-      p[0] += x + 0.5; p[1] += y + 0.5; p[2] += z + 0.5;
+      p[0] += x + 0.5;
+      p[1] += y + 0.5;
+      p[2] += z + 0.5;
     } else {
-      p[0] += x + 0.5; p[1] += y + 0.125; p[2] += z + 0.5;
+      p[0] += x + 0.5;
+      p[1] += y + 0.125;
+      p[2] += z + 0.5;
     }
   }
-  const faces = [[0, 1, 2, 3], [7, 6, 5, 4], [1, 0, 4, 5], [2, 1, 5, 6], [3, 2, 6, 7], [0, 3, 7, 4]];
+  const faces = [
+    [0, 1, 2, 3],
+    [7, 6, 5, 4],
+    [1, 0, 4, 5],
+    [2, 1, 5, 6],
+    [3, 2, 6, 7],
+    [0, 3, 7, 4],
+  ];
   g.color(1, 1, 1);
   faces.forEach((f, i) => {
-    const u0 = (U + 7) / A, u1 = (U + 9 - 0.01) / A;
+    const u0 = (U + 7) / A,
+      u1 = (U + 9 - 0.01) / A;
     const v0 = (V + 6) / A;
     const v1 = (i === 0 ? V + 8 - 0.01 : V + 16 - 0.01) / A;
     const [p0, p1, p2, p3] = f.map((k) => pts[k]);
@@ -606,10 +789,21 @@ function drawRepeater(g: GeoBuilder, d: BlockDef, x: number, y: number, z: numbe
   const delay = (meta >> 2) & 3;
   const slab = box(0, 0, 0, 1, 0.125, 1);
   // Base slab without the top (the top is drawn rotated below).
-  drawBox(g, x, y, z, slab, (s) => d.tex(s as Side, meta), (s) => s !== 1);
+  drawBox(
+    g,
+    x,
+    y,
+    z,
+    slab,
+    (s) => d.tex(s as Side, meta),
+    (s) => s !== 1,
+  );
 
   const dy = -0.1875;
-  let t1x = 0, t1z = 0, t2x = 0, t2z = 0;
+  let t1x = 0,
+    t1z = 0,
+    t2x = 0,
+    t2z = 0;
   if (dir === 0) {
     t2z = -0.3125;
     t1z = REPEATER_DELAY[delay];
@@ -630,18 +824,33 @@ function drawRepeater(g: GeoBuilder, d: BlockDef, x: number, y: number, z: numbe
   const tex = d.tex(1, meta);
   const U = tileX(tex);
   const V = tileY(tex);
-  const u0 = U / A, u1 = (U + 15.99) / A, v0 = V / A, v1 = (V + 15.99) / A;
-  let a1 = x + 1, a2 = x + 1, a3 = x, a4 = x;
-  let b1 = z, b2 = z + 1, b3 = z + 1, b4 = z;
+  const u0 = U / A,
+    u1 = (U + 15.99) / A,
+    v0 = V / A,
+    v1 = (V + 15.99) / A;
+  let a1 = x + 1,
+    a2 = x + 1,
+    a3 = x,
+    a4 = x;
+  let b1 = z,
+    b2 = z + 1,
+    b3 = z + 1,
+    b4 = z;
   if (dir === 2) {
-    a1 = a2 = x; a3 = a4 = x + 1;
-    b1 = b4 = z + 1; b2 = b3 = z;
+    a1 = a2 = x;
+    a3 = a4 = x + 1;
+    b1 = b4 = z + 1;
+    b2 = b3 = z;
   } else if (dir === 3) {
-    a1 = a4 = x; a2 = a3 = x + 1;
-    b1 = b2 = z; b3 = b4 = z + 1;
+    a1 = a4 = x;
+    a2 = a3 = x + 1;
+    b1 = b2 = z;
+    b3 = b4 = z + 1;
   } else if (dir === 1) {
-    a1 = a4 = x + 1; a2 = a3 = x;
-    b1 = b2 = z + 1; b3 = b4 = z;
+    a1 = a4 = x + 1;
+    a2 = a3 = x;
+    b1 = b2 = z + 1;
+    b3 = b4 = z;
   }
   const yy = y + 0.125;
   g.color(1, 1, 1);
@@ -687,21 +896,31 @@ function drawPiston(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z:
   }
   let b = FULL;
   if (extended) {
-    b = [
-      box(0, 0.25, 0, 1, 1, 1),
-      box(0, 0, 0, 1, 0.75, 1),
-      box(0, 0, 0.25, 1, 1, 1),
-      box(0, 0, 0, 1, 1, 0.75),
-      box(0.25, 0, 0, 1, 1, 1),
-      box(0, 0, 0, 0.75, 1, 1),
-    ][facing] ?? FULL;
+    b =
+      [
+        box(0, 0.25, 0, 1, 1, 1),
+        box(0, 0, 0, 1, 0.75, 1),
+        box(0, 0, 0.25, 1, 1, 1),
+        box(0, 0, 0, 1, 1, 0.75),
+        box(0.25, 0, 0, 1, 1, 1),
+        box(0, 0, 0, 0.75, 1, 1),
+      ][facing] ?? FULL;
   }
   drawBounded(c, g, d, x, y, z, meta, b, rot);
   if (extended && facing <= 5) drawPistonHead(c, g, d, x + DX[facing], y + DY[facing], z + DZ[facing], meta, rot);
 }
 
 /** Head of an extended piston in the cell it faces: a 4-px plate and a rod back into the base. */
-function drawPistonHead(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: number, meta: number, rot: UvRot): void {
+function drawPistonHead(
+  c: Ctx,
+  g: GeoBuilder,
+  d: BlockDef,
+  x: number,
+  y: number,
+  z: number,
+  meta: number,
+  rot: UvRot,
+): void {
   const n = c.v.id(x, y, z);
   if (n !== 0 && n !== 34) return;
   const facing = meta & 7;
@@ -716,7 +935,8 @@ function drawPistonHead(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number
     box(0, 0, 0, q, 1, 1),
     box(1 - q, 0, 0, 1, 1, 1),
   ][facing];
-  const a = 0.375, b = 0.625;
+  const a = 0.375,
+    b = 0.625;
   // The rod runs from the plate back through this cell and a quarter into the base.
   const rod = [
     box(a, q, a, b, 1.25, b),
@@ -727,7 +947,16 @@ function drawPistonHead(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number
     box(-0.25, a, a, 1 - q, b, b),
   ][facing];
   drawBox(g, x, y, z, plate, plateTex, () => true, rot);
-  drawBox(g, x, y, z, rod, () => 108, (s) => s !== facing && s !== [1, 0, 3, 2, 5, 4][facing], rot);
+  drawBox(
+    g,
+    x,
+    y,
+    z,
+    rod,
+    () => 108,
+    (s) => s !== facing && s !== [1, 0, 3, 2, 5, 4][facing],
+    rot,
+  );
 }
 
 // ── Superconductor: core + connectors ────────────────────────────────────────
@@ -763,8 +992,11 @@ function drawLamp(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: n
 }
 
 export function lampBoxes(v: Voxels, x: number, y: number, z: number, m: number, self: number): Bounds[] {
-  const lo = 0.001, hi = 0.999, t = 0.12;
-  const c0 = 0.5 - t / 2, c1 = 0.5 + t / 2;
+  const lo = 0.001,
+    hi = 0.999,
+    t = 0.12;
+  const c0 = 0.5 - t / 2,
+    c1 = 0.5 + t / 2;
   const metaAt = (ax: number, ay: number, az: number) => v.meta(ax, ay, az);
   const same = (ax: number, ay: number, az: number, mm: number): boolean => {
     if (v.id(ax, ay, az) !== self) return false;
@@ -805,35 +1037,52 @@ export function lampBoxes(v: Voxels, x: number, y: number, z: number, m: number,
     if (down && !wX && !eX) below = metaAt(x, y - 1, z);
     if (sZ && nZ) main = box(c0, hi - t, lo, c1, hi, hi);
     else if (wX && eX) main = box(lo, hi - t, c0, hi, hi, c1);
-    else if (!sZ && !nZ) main = below !== 2 && below !== 3 ? box(lo, hi - t, c0, hi, hi, c1) : box(c0, hi - t, lo, c1, hi, hi);
-    else if (eX) { corners = false; main = box(c0, hi - t, c0, hi, hi, c1); }
-    else if (wX) { corners = false; main = box(lo, hi - t, c0, c1, hi, c1); }
-    else main = box(c0, hi - t, lo, c1, hi, hi);
+    else if (!sZ && !nZ)
+      main = below !== 2 && below !== 3 ? box(lo, hi - t, c0, hi, hi, c1) : box(c0, hi - t, lo, c1, hi, hi);
+    else if (eX) {
+      corners = false;
+      main = box(c0, hi - t, c0, hi, hi, c1);
+    } else if (wX) {
+      corners = false;
+      main = box(lo, hi - t, c0, c1, hi, c1);
+    } else main = box(c0, hi - t, lo, c1, hi, hi);
   } else if (m === 1) {
     if (up && !wX && !eX) below = metaAt(x, y + 1, z);
     if (sZ && nZ) main = box(c0, lo, lo, c1, t, hi);
     else if (wX && eX) main = box(lo, lo, c0, hi, t, c1);
     else if (!sZ && !nZ) main = below !== 2 && below !== 3 ? box(lo, lo, c0, hi, t, c1) : box(c0, lo, lo, c1, t, hi);
-    else if (eX) { corners = false; main = box(c0, lo, c0, hi, t, c1); }
-    else if (wX) { corners = false; main = box(lo, lo, c0, c1, t, c1); }
-    else main = box(c0, lo, lo, c1, t, hi);
+    else if (eX) {
+      corners = false;
+      main = box(c0, lo, c0, hi, t, c1);
+    } else if (wX) {
+      corners = false;
+      main = box(lo, lo, c0, c1, t, c1);
+    } else main = box(c0, lo, lo, c1, t, hi);
   } else if (m === 2 || m === 3) {
     const zz0 = m === 2 ? hi - t : lo;
     const zz1 = m === 2 ? hi : t;
     if (wX && eX) main = box(lo, c0, zz0, hi, c1, zz1);
     else if (down && up) main = box(c0, lo, zz0, c1, hi, zz1);
-    else if (wX && (down || up)) { corners = false; main = box(lo, c0, zz0, c1, c1, zz1); }
-    else if (eX && (down || up)) { corners = false; main = box(c0, c0, zz0, hi, c1, zz1); }
-    else if (!wX && !eX) main = box(c0, lo, zz0, c1, hi, zz1);
+    else if (wX && (down || up)) {
+      corners = false;
+      main = box(lo, c0, zz0, c1, c1, zz1);
+    } else if (eX && (down || up)) {
+      corners = false;
+      main = box(c0, c0, zz0, hi, c1, zz1);
+    } else if (!wX && !eX) main = box(c0, lo, zz0, c1, hi, zz1);
     else main = box(lo, c0, zz0, hi, c1, zz1);
   } else if (m === 4 || m === 5) {
     const xx0 = m === 4 ? hi - t : lo;
     const xx1 = m === 4 ? hi : t;
     if (nZ && sZ) main = box(xx0, c0, lo, xx1, c1, hi);
     else if (down && up) main = box(xx0, lo, c0, xx1, hi, c1);
-    else if (nZ && (down || up)) { corners = false; main = box(xx0, c0, lo, xx1, c1, c1); }
-    else if (sZ && (down || up)) { corners = false; main = box(xx0, c0, c0, xx1, c1, hi); }
-    else if (!nZ && !sZ) main = box(xx0, lo, c0, xx1, hi, c1);
+    else if (nZ && (down || up)) {
+      corners = false;
+      main = box(xx0, c0, lo, xx1, c1, c1);
+    } else if (sZ && (down || up)) {
+      corners = false;
+      main = box(xx0, c0, c0, xx1, c1, hi);
+    } else if (!nZ && !sZ) main = box(xx0, lo, c0, xx1, hi, c1);
     else main = box(xx0, c0, lo, xx1, c1, hi);
   }
   if (main) out.push(main);
@@ -937,7 +1186,10 @@ function drawTube(c: Ctx, g: GeoBuilder, d: BlockDef, x: number, y: number, z: n
   const nx = con(x - 1, y, z);
   const pz = con(x, y, z + 1);
   const nz = con(x, y, z - 1);
-  const r0 = 0.1875, r1 = 0.8125, p0 = 0.25, p1 = 0.75;
+  const r0 = 0.1875,
+    r1 = 0.8125,
+    p0 = 0.25,
+    p1 = 0.75;
   const draw = (b: Bounds, rot: UvRot = NO_ROT) => drawBounded(c, g, d, x, y, z, meta, b, rot, true);
   // UV rotation exactly as the client sets it for open pipe ends (only one face per axis).
   const rotX: UvRot = [0, 0, 1, 0, 0, 0]; // pipe along X

@@ -79,12 +79,12 @@ export function buildTestScene(): Scene {
   const blocks = new Uint8Array(width * height * length);
   const data = new Uint8Array(width * height * length);
   const set = (x: number, y: number, z: number, id: number, meta = 0) => {
-    if (x < 0 || y < 0 || z < 0 || x >= width || y >= height || z >= length) throw new Error(`out of scene: ${x},${y},${z}`);
+    if (x < 0 || y < 0 || z < 0 || x >= width || y >= height || z >= length)
+      throw new Error(`out of scene: ${x},${y},${z}`);
     const i = (y * length + z) * width + x;
     blocks[i] = id;
     data[i] = meta;
   };
-
 
   // Catalog: one row per block, variants along +X (wrapping onto y=2 if more than 12).
   let z = 1;

@@ -5,7 +5,10 @@ import * as THREE from 'three';
 /** UI font of the preset, also used for labels drawn on canvases. */
 export const CANVAS_FONT = "'Geist Mono Variable', ui-monospace, monospace";
 
-function textCanvas(text: string, opts: { color: string; bg?: string; font?: string; pad?: number }): HTMLCanvasElement {
+function textCanvas(
+  text: string,
+  opts: { color: string; bg?: string; font?: string; pad?: number },
+): HTMLCanvasElement {
   const font = opts.font ?? `bold 48px ${CANVAS_FONT}`;
   const pad = opts.pad ?? 12;
   const c = document.createElement('canvas');
@@ -48,7 +51,10 @@ function floorLabel(text: string, color: string, size: number): THREE.Sprite {
 export function makeGrid(width: number, length: number, dark: boolean): THREE.Group {
   const group = new THREE.Group();
   const margin = Math.max(8, Math.round(Math.max(width, length) * 0.25));
-  const x0 = -margin, x1 = width + margin, z0 = -margin, z1 = length + margin;
+  const x0 = -margin,
+    x1 = width + margin,
+    z0 = -margin,
+    z1 = length + margin;
   const minor: number[] = [];
   const major: number[] = [];
   for (let x = x0; x <= x1; x++) (x % 16 === 0 ? major : minor).push(x, 0, z0, x, 0, z1);
@@ -61,14 +67,42 @@ export function makeGrid(width: number, length: number, dark: boolean): THREE.Gr
   const lines = (pts: number[], color: number, opacity: number) => {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-    const l = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false }));
+    const l = new THREE.LineSegments(
+      geo,
+      new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false }),
+    );
     l.renderOrder = -1;
     return l;
   };
   const base = dark ? 0xffffff : 0x000000;
   lineGroup.add(lines(minor, base, dark ? 0.08 : 0.1));
   lineGroup.add(lines(major, base, dark ? 0.16 : 0.2));
-  const outline = [0, 0, 0, width, 0, 0, width, 0, 0, width, 0, length, width, 0, length, 0, 0, length, 0, 0, length, 0, 0, 0];
+  const outline = [
+    0,
+    0,
+    0,
+    width,
+    0,
+    0,
+    width,
+    0,
+    0,
+    width,
+    0,
+    length,
+    width,
+    0,
+    length,
+    0,
+    0,
+    length,
+    0,
+    0,
+    length,
+    0,
+    0,
+    0,
+  ];
   lineGroup.add(lines(outline, dark ? 0x8fb3ea : 0x2b5fb3, 0.9));
   // Side labels a little beyond the footprint.
   const size = Math.max(1.2, Math.min(6, margin * 0.35));
@@ -111,7 +145,9 @@ function outlinedSprite(text: string): THREE.Sprite {
   g.strokeText(text, c.width / 2, c.height / 2 + 2);
   g.fillStyle = '#ffffff';
   g.fillText(text, c.width / 2, c.height / 2 + 2);
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: canvasTexture(c), depthTest: false, sizeAttenuation: false }));
+  const s = new THREE.Sprite(
+    new THREE.SpriteMaterial({ map: canvasTexture(c), depthTest: false, sizeAttenuation: false }),
+  );
   const h = 0.06;
   s.scale.set((c.width / c.height) * h, h, 1);
   s.renderOrder = 20;
@@ -126,7 +162,10 @@ export function makeMeasureBox(a: Cell, b: Cell): THREE.Group {
   const size = max.clone().sub(min);
   const center = min.clone().add(size.clone().multiplyScalar(0.5));
   const geo = new THREE.BoxGeometry(size.x + 0.02, size.y + 0.02, size.z + 0.02);
-  const frame = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 }));
+  const frame = new THREE.LineSegments(
+    new THREE.EdgesGeometry(geo),
+    new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 }),
+  );
   frame.position.copy(center);
   frame.renderOrder = 19;
   const hidden = new THREE.LineSegments(
@@ -135,7 +174,10 @@ export function makeMeasureBox(a: Cell, b: Cell): THREE.Group {
   );
   hidden.position.copy(center);
   hidden.renderOrder = 18;
-  const fill = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xbfe3ff, transparent: true, opacity: 0.12, depthWrite: false }));
+  const fill = new THREE.Mesh(
+    geo,
+    new THREE.MeshBasicMaterial({ color: 0xbfe3ff, transparent: true, opacity: 0.12, depthWrite: false }),
+  );
   fill.position.copy(center);
   fill.renderOrder = 17;
   const label = outlinedSprite(`${size.x} × ${size.y} × ${size.z}`);

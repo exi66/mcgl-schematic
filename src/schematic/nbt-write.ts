@@ -44,7 +44,7 @@ class Writer {
   }
   u8(v: number): void {
     this.ensure(1);
-    this.view.setInt8(this.len++, v << 24 >> 24);
+    this.view.setInt8(this.len++, (v << 24) >> 24);
   }
   i16(v: number): void {
     this.ensure(2);

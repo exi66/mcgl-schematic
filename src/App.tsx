@@ -127,11 +127,23 @@ export default function App() {
     else void document.documentElement.requestFullscreen?.();
   }, []);
 
-  const size = useMemo(() => (schematic ? { x: schematic.width, y: schematic.height, z: schematic.length } : { x: 1, y: 1, z: 1 }), [schematic]);
+  const size = useMemo(
+    () => (schematic ? { x: schematic.width, y: schematic.height, z: schematic.length } : { x: 1, y: 1, z: 1 }),
+    [schematic],
+  );
 
-  const toggleSlice = useCallback(() => setSlice((s) => ({ ...s, enabled: !s.enabled, value: s.enabled ? s.value : Math.min(s.value, size[s.axis] - 1) })), [size]);
+  const toggleSlice = useCallback(
+    () =>
+      setSlice((s) => ({
+        ...s,
+        enabled: !s.enabled,
+        value: s.enabled ? s.value : Math.min(s.value, size[s.axis] - 1),
+      })),
+    [size],
+  );
   const stepSlice = useCallback(
-    (d: number) => setSlice((s) => ({ ...s, enabled: true, value: Math.max(0, Math.min(size[s.axis] - 1, s.value + d)) })),
+    (d: number) =>
+      setSlice((s) => ({ ...s, enabled: true, value: Math.max(0, Math.min(size[s.axis] - 1, s.value + d)) })),
     [size],
   );
 
@@ -178,7 +190,10 @@ export default function App() {
     [source, size, stats],
   );
   const view: ViewState = useMemo(() => ({ slice, hidden, highlight }), [slice, hidden, highlight]);
-  const display: DisplayState = useMemo(() => ({ grid, ortho, background, dark, animate, labels }), [grid, ortho, background, dark, animate, labels]);
+  const display: DisplayState = useMemo(
+    () => ({ grid, ortho, background, dark, animate, labels }),
+    [grid, ortho, background, dark, animate, labels],
+  );
   const onError = useCallback((m: string) => setError(m), []);
 
   const fmt = new Intl.NumberFormat('ru-RU');
@@ -225,7 +240,13 @@ export default function App() {
               <Button variant="outline" size="sm" onClick={() => setOpenDialog(true)} disabled={loading}>
                 <FolderOpen /> Открыть
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => setDark((d) => !d)} title={dark ? 'Светлая тема' : 'Тёмная тема'} aria-label="Сменить тему">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setDark((d) => !d)}
+                title={dark ? 'Светлая тема' : 'Тёмная тема'}
+                aria-label="Сменить тему"
+              >
                 {dark ? <Sun /> : <Moon />}
               </Button>
             </div>
@@ -233,7 +254,10 @@ export default function App() {
         )}
 
         {error && (
-          <div role="alert" className="flex items-start gap-3 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-sm whitespace-pre-line text-destructive">
+          <div
+            role="alert"
+            className="flex items-start gap-3 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-sm whitespace-pre-line text-destructive"
+          >
             <span className="flex-1">{error}</span>
             <button type="button" className="text-xs underline" onClick={() => setError(null)}>
               закрыть
@@ -301,16 +325,27 @@ export default function App() {
                   <div>{fmt.format(nonAir)} блоков</div>
                   {slice.enabled && (
                     <div className="text-primary">
-                      {slice.isolate ? 'Слой' : 'До слоя'} {slice.axis.toUpperCase()} {slice.value + 1} из {size[slice.axis]}
+                      {slice.isolate ? 'Слой' : 'До слоя'} {slice.axis.toUpperCase()} {slice.value + 1} из{' '}
+                      {size[slice.axis]}
                     </div>
                   )}
                 </div>
                 {navMode !== 'explore' && slice.enabled && (
                   <div className="absolute top-1/2 right-3 z-10 -translate-y-1/2">
-                    <SlicePanel slice={slice} size={size} onChange={setSlice} onClose={() => setSlice((s) => ({ ...s, enabled: false }))} />
+                    <SlicePanel
+                      slice={slice}
+                      size={size}
+                      onChange={setSlice}
+                      onClose={() => setSlice((s) => ({ ...s, enabled: false }))}
+                    />
                   </div>
                 )}
-                <div className={cn('pointer-events-none absolute bottom-3 left-1/2 z-20 -translate-x-1/2', exploreLocked && 'hidden')}>
+                <div
+                  className={cn(
+                    'pointer-events-none absolute bottom-3 left-1/2 z-20 -translate-x-1/2',
+                    exploreLocked && 'hidden',
+                  )}
+                >
                   <Toolbar
                     navMode={navMode}
                     onNavMode={setNavMode}
@@ -338,13 +373,19 @@ export default function App() {
                 </div>
               </>
             )}
-            {!schematic && <Welcome loading={loading} onOpen={() => setOpenDialog(true)} onExample={() => void openUrl(EXAMPLE)} />}
+            {!schematic && (
+              <Welcome loading={loading} onOpen={() => setOpenDialog(true)} onExample={() => void openUrl(EXAMPLE)} />
+            )}
             {dragging && (
               <div className="pointer-events-none absolute inset-3 z-30 flex items-center justify-center border-2 border-dashed border-primary bg-primary/10 text-lg font-medium text-primary">
                 Отпустите файл .schematic
               </div>
             )}
-            {loading && schematic && <div className="absolute top-3 left-1/2 z-30 -translate-x-1/2 bg-card px-3 py-1 text-sm shadow">Загрузка…</div>}
+            {loading && schematic && (
+              <div className="absolute top-3 left-1/2 z-30 -translate-x-1/2 bg-card px-3 py-1 text-sm shadow">
+                Загрузка…
+              </div>
+            )}
           </main>
         </div>
         <HotkeysDialog open={help} onOpenChange={setHelp} />
@@ -364,7 +405,12 @@ export default function App() {
 function Welcome({ loading, onOpen, onExample }: { loading: boolean; onOpen: () => void; onExample: () => void }) {
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-background p-4">
-      <div className={cn('flex max-w-md flex-col items-center gap-4 border bg-card p-8 text-center shadow-sm', loading && 'opacity-70')}>
+      <div
+        className={cn(
+          'flex max-w-md flex-col items-center gap-4 border bg-card p-8 text-center shadow-sm',
+          loading && 'opacity-70',
+        )}
+      >
         <FolderOpen className="size-10 text-muted-foreground" />
         <div>
           <p className="text-lg font-semibold">{loading ? 'Загрузка…' : 'Откройте схематику'}</p>

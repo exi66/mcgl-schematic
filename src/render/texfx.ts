@@ -92,7 +92,11 @@ class LavaFx implements TextureFx {
   private c = new Float32Array(256);
   private d = new Float32Array(256);
   private t = 0;
-  constructor(readonly slot: number, readonly size: 1 | 2, private readonly flowing: boolean) {}
+  constructor(
+    readonly slot: number,
+    readonly size: 1 | 2,
+    private readonly flowing: boolean,
+  ) {}
   tick(): void {
     this.t++;
     const { a, b, c, d } = this;
@@ -101,11 +105,17 @@ class LavaFx implements TextureFx {
         let s = 0;
         const ox = Math.trunc(fsin((y * Math.PI * 2) / 16) * 1.2);
         const oy = Math.trunc(fsin((x * Math.PI * 2) / 16) * 1.2);
-        for (let i = x - 1; i <= x + 1; i++) for (let j = y - 1; j <= y + 1; j++) s += a[((i + ox) & 15) + ((j + oy) & 15) * 16];
+        for (let i = x - 1; i <= x + 1; i++)
+          for (let j = y - 1; j <= y + 1; j++) s += a[((i + ox) & 15) + ((j + oy) & 15) * 16];
         const k = x + y * 16;
         b[k] =
           s / 10 +
-          ((c[(x & 15) + (y & 15) * 16] + c[((x + 1) & 15) + (y & 15) * 16] + c[((x + 1) & 15) + ((y + 1) & 15) * 16] + c[(x & 15) + ((y + 1) & 15) * 16]) / 4) * 0.8;
+          ((c[(x & 15) + (y & 15) * 16] +
+            c[((x + 1) & 15) + (y & 15) * 16] +
+            c[((x + 1) & 15) + ((y + 1) & 15) * 16] +
+            c[(x & 15) + ((y + 1) & 15) * 16]) /
+            4) *
+            0.8;
         c[k] += d[k] * 0.01;
         if (c[k] < 0) c[k] = 0;
         d[k] -= 0.06;
@@ -225,7 +235,10 @@ class TitaniumFx implements TextureFx {
   readonly size = 1;
   pixels = new Uint8ClampedArray(N * N * 4);
   private t = 0;
-  constructor(readonly slot: number, private readonly base: Uint8ClampedArray) {}
+  constructor(
+    readonly slot: number,
+    private readonly base: Uint8ClampedArray,
+  ) {}
   tick(): void {
     this.t++;
     for (let x = 0; x < 16; x++)
@@ -292,11 +305,15 @@ class BridgeFx implements TextureFx {
 class FieldCircleFx implements TextureFx {
   readonly size = 1;
   pixels = new Uint8ClampedArray(N * N * 4);
-  constructor(readonly slot: number, private readonly src: EnergyFieldFx) {}
+  constructor(
+    readonly slot: number,
+    private readonly src: EnergyFieldFx,
+  ) {}
   tick(): void {
     for (let x = 0; x < 16; x++)
       for (let y = 0; y < 16; y++) {
-        const dx = x - 7, dy = y - 7;
+        const dx = x - 7,
+          dy = y - 7;
         const i = (y * 16 + x) * 4;
         if (dx * dx + dy * dy < 49) this.pixels.set(this.src.pixels.subarray(i, i + 4), i);
         else this.pixels[i + 3] = 0;
@@ -312,8 +329,10 @@ export interface AtlasPixels {
 
 function readTile(img: AtlasPixels, slot: number): Uint8ClampedArray {
   const out = new Uint8ClampedArray(N * N * 4);
-  const x0 = tileX(slot), y0 = tileY(slot);
-  for (let y = 0; y < 16; y++) out.set(img.data.subarray(((y0 + y) * img.width + x0) * 4, ((y0 + y) * img.width + x0 + 16) * 4), y * 64);
+  const x0 = tileX(slot),
+    y0 = tileY(slot);
+  for (let y = 0; y < 16; y++)
+    out.set(img.data.subarray(((y0 + y) * img.width + x0) * 4, ((y0 + y) * img.width + x0 + 16) * 4), y * 64);
   return out;
 }
 

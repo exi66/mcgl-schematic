@@ -71,7 +71,11 @@ export function faceBottom(g: GeoBuilder, x: number, y: number, z: number, b: Bo
     v24 = v16;
     v26 = v18;
   }
-  const X0 = x + b.x0, X1 = x + b.x1, Y = y + b.y0, Z0 = z + b.z0, Z1 = z + b.z1;
+  const X0 = x + b.x0,
+    X1 = x + b.x1,
+    Y = y + b.y0,
+    Z0 = z + b.z0,
+    Z1 = z + b.z1;
   g.vertex(X0, Y, Z1, u22, v26);
   g.vertex(X0, Y, Z0, u12, v16);
   g.vertex(X1, Y, Z0, u20, v24);
@@ -121,7 +125,11 @@ export function faceTop(g: GeoBuilder, x: number, y: number, z: number, b: Bound
     v24 = v16;
     v26 = v18;
   }
-  const X0 = x + b.x0, X1 = x + b.x1, Y = y + b.y1, Z0 = z + b.z0, Z1 = z + b.z1;
+  const X0 = x + b.x0,
+    X1 = x + b.x1,
+    Y = y + b.y1,
+    Z0 = z + b.z0,
+    Z1 = z + b.z1;
   g.vertex(X1, Y, Z1, u14, v18);
   g.vertex(X1, Y, Z0, u20, v24);
   g.vertex(X0, Y, Z0, u12, v16);
@@ -171,7 +179,11 @@ export function faceNegZ(g: GeoBuilder, x: number, y: number, z: number, b: Boun
     v24 = v16;
     v26 = v18;
   }
-  const X0 = x + b.x0, X1 = x + b.x1, Y0 = y + b.y0, Y1 = y + b.y1, Z = z + b.z0;
+  const X0 = x + b.x0,
+    X1 = x + b.x1,
+    Y0 = y + b.y0,
+    Y1 = y + b.y1,
+    Z = z + b.z0;
   g.vertex(X0, Y1, Z, u43, v24);
   g.vertex(X1, Y1, Z, u12, v16);
   g.vertex(X1, Y0, Z, u22, v26);
@@ -221,7 +233,11 @@ export function facePosZ(g: GeoBuilder, x: number, y: number, z: number, b: Boun
     v24 = v16;
     v26 = v18;
   }
-  const X0 = x + b.x0, X1 = x + b.x1, Y0 = y + b.y0, Y1 = y + b.y1, Z = z + b.z1;
+  const X0 = x + b.x0,
+    X1 = x + b.x1,
+    Y0 = y + b.y0,
+    Y1 = y + b.y1,
+    Z = z + b.z1;
   g.vertex(X0, Y1, Z, u12, v16);
   g.vertex(X0, Y0, Z, u22, v26);
   g.vertex(X1, Y0, Z, u14, v18);
@@ -271,7 +287,11 @@ export function faceNegX(g: GeoBuilder, x: number, y: number, z: number, b: Boun
     v24 = v16;
     v26 = v18;
   }
-  const X = x + b.x0, Y0 = y + b.y0, Y1 = y + b.y1, Z0 = z + b.z0, Z1 = z + b.z1;
+  const X = x + b.x0,
+    Y0 = y + b.y0,
+    Y1 = y + b.y1,
+    Z0 = z + b.z0,
+    Z1 = z + b.z1;
   g.vertex(X, Y1, Z1, u43, v24);
   g.vertex(X, Y1, Z0, u12, v16);
   g.vertex(X, Y0, Z0, u22, v26);
@@ -321,7 +341,11 @@ export function facePosX(g: GeoBuilder, x: number, y: number, z: number, b: Boun
     v24 = v16;
     v26 = v18;
   }
-  const X = x + b.x1, Y0 = y + b.y0, Y1 = y + b.y1, Z0 = z + b.z0, Z1 = z + b.z1;
+  const X = x + b.x1,
+    Y0 = y + b.y0,
+    Y1 = y + b.y1,
+    Z0 = z + b.z0,
+    Z1 = z + b.z1;
   g.vertex(X, Y0, Z1, u22, v26);
   g.vertex(X, Y0, Z0, u14, v18);
   g.vertex(X, Y1, Z0, u43, v24);

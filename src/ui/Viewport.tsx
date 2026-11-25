@@ -245,10 +245,13 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
       {schematic && measure && <MeasureCard a={measure.a} b={measure.b} schematic={schematic} onClose={clearAll} />}
       {schematic && selected && (
         <div className="absolute top-3 right-3 z-10 w-72">
-          <InfoCard block={selected} onClose={() => {
-            setSelected(null);
-            v?.setSelected(null);
-          }} />
+          <InfoCard
+            block={selected}
+            onClose={() => {
+              setSelected(null);
+              v?.setSelected(null);
+            }}
+          />
         </div>
       )}
       {showFps && v && (
@@ -261,7 +264,8 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
           <div className="pointer-events-none absolute top-1/2 left-1/2 size-4 -translate-x-1/2 -translate-y-1/2 before:absolute before:top-1/2 before:left-0 before:h-0.5 before:w-full before:-translate-y-1/2 before:bg-white/80 after:absolute after:top-0 after:left-1/2 after:h-full after:w-0.5 after:-translate-x-1/2 after:bg-white/80" />
           {ex && camPos && (
             <div className="pointer-events-none absolute top-3 left-3 z-10 border bg-card/90 px-2.5 py-1.5 text-xs leading-5 tabular-nums shadow-sm backdrop-blur">
-              {ex.flying ? `Полёт · скорость ${ex.speed.toFixed(0)}` : 'Ходьба'} · {camPos.x.toFixed(1)} {camPos.y.toFixed(1)} {camPos.z.toFixed(1)}
+              {ex.flying ? `Полёт · скорость ${ex.speed.toFixed(0)}` : 'Ходьба'} · {camPos.x.toFixed(1)}{' '}
+              {camPos.y.toFixed(1)} {camPos.z.toFixed(1)}
             </div>
           )}
           {hoverTips && lookAt && schematic && (
@@ -280,7 +284,9 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
         >
           <span className="border bg-card/95 px-7 py-4 text-center shadow-lg">
             <span className="block text-sm font-semibold">Кликните, чтобы осмотреться</span>
-            <span className="mt-1 block text-xs text-muted-foreground">Чтобы выйти из обзора, переключите режим на панели ниже.</span>
+            <span className="mt-1 block text-xs text-muted-foreground">
+              Чтобы выйти из обзора, переключите режим на панели ниже.
+            </span>
           </span>
         </button>
       )}
@@ -291,12 +297,32 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
 /** Controls hint shown in place of the toolbar while the explore mode holds the mouse (as in shulkr). */
 function ExploreHint({ flying }: { flying: boolean }) {
   const rows: [React.ReactNode, string][] = [
-    [<><Kbd>W</Kbd><Kbd>A</Kbd><Kbd>S</Kbd><Kbd>D</Kbd></>, flying ? 'Лететь' : 'Идти'],
+    [
+      <>
+        <Kbd>W</Kbd>
+        <Kbd>A</Kbd>
+        <Kbd>S</Kbd>
+        <Kbd>D</Kbd>
+      </>,
+      flying ? 'Лететь' : 'Идти',
+    ],
     [<Kbd>Мышь</Kbd>, 'Смотреть'],
     [<Kbd>Space</Kbd>, flying ? 'Вверх' : 'Прыжок'],
     [<Kbd>⇧</Kbd>, flying ? 'Вниз' : 'Присесть'],
-    [<><Kbd>Space</Kbd><Kbd>Space</Kbd></>, flying ? 'Приземлиться' : 'Взлететь'],
-    [<><Kbd>W</Kbd><Kbd>W</Kbd></>, 'Бег'],
+    [
+      <>
+        <Kbd>Space</Kbd>
+        <Kbd>Space</Kbd>
+      </>,
+      flying ? 'Приземлиться' : 'Взлететь',
+    ],
+    [
+      <>
+        <Kbd>W</Kbd>
+        <Kbd>W</Kbd>
+      </>,
+      'Бег',
+    ],
     ...(flying ? ([[<Kbd>Колесо</Kbd>, 'Скорость полёта']] as [React.ReactNode, string][]) : []),
     [<Kbd>Esc</Kbd>, 'Отпустить мышь'],
   ];
@@ -315,12 +341,19 @@ function ExploreHint({ flying }: { flying: boolean }) {
 }
 
 function MeasureCard({ a, b, schematic, onClose }: { a: Cell; b: Cell; schematic: Schematic; onClose: () => void }) {
-  const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x);
-  const y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
-  const z0 = Math.min(a.z, b.z), z1 = Math.max(a.z, b.z);
-  const w = x1 - x0 + 1, h = y1 - y0 + 1, l = z1 - z0 + 1;
+  const x0 = Math.min(a.x, b.x),
+    x1 = Math.max(a.x, b.x);
+  const y0 = Math.min(a.y, b.y),
+    y1 = Math.max(a.y, b.y);
+  const z0 = Math.min(a.z, b.z),
+    z1 = Math.max(a.z, b.z);
+  const w = x1 - x0 + 1,
+    h = y1 - y0 + 1,
+    l = z1 - z0 + 1;
   let inside = 0;
-  for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) if (schematic.blocks[blockIndex(schematic, x, y, z)] !== 0) inside++;
+  for (let y = y0; y <= y1; y++)
+    for (let z = z0; z <= z1; z++)
+      for (let x = x0; x <= x1; x++) if (schematic.blocks[blockIndex(schematic, x, y, z)] !== 0) inside++;
   const fmt = new Intl.NumberFormat('ru-RU');
   return (
     <div className="absolute top-3 left-3 z-10 w-56 border bg-card/95 text-sm shadow-lg backdrop-blur">
@@ -331,7 +364,12 @@ function MeasureCard({ a, b, schematic, onClose }: { a: Cell; b: Cell; schematic
           </div>
           <div className="text-xs text-muted-foreground">{fmt.format(w * h * l)} клеток</div>
         </div>
-        <button type="button" className="text-muted-foreground hover:text-foreground [&_svg]:size-4" onClick={onClose} aria-label="Убрать измерение">
+        <button
+          type="button"
+          className="text-muted-foreground hover:text-foreground [&_svg]:size-4"
+          onClick={onClose}
+          aria-label="Убрать измерение"
+        >
           <X />
         </button>
       </div>
@@ -354,11 +392,16 @@ function hoverStyle(h: { px: number; py: number }): React.CSSProperties {
 
 function HoverCard({ block, style }: { block: BlockAt; style?: React.CSSProperties }) {
   return (
-    <div className="pointer-events-none z-10 flex max-w-72 items-center gap-2.5 border bg-card/95 px-3 py-2 text-xs shadow-lg backdrop-blur" style={style}>
+    <div
+      className="pointer-events-none z-10 flex max-w-72 items-center gap-2.5 border bg-card/95 px-3 py-2 text-xs shadow-lg backdrop-blur"
+      style={style}
+    >
       <BlockIcon id={block.id} meta={block.meta} size={32} />
       <div className="min-w-0 flex-1">
         <div className="text-sm leading-5 font-medium">{blockName(block.id, block.meta)}</div>
-        <div className="leading-5 text-muted-foreground tabular-nums">ID: {block.id}:{block.meta}</div>
+        <div className="leading-5 text-muted-foreground tabular-nums">
+          ID: {block.id}:{block.meta}
+        </div>
         <div className="leading-5 text-muted-foreground tabular-nums">
           Положение: {block.x}, {block.y}, {block.z}
         </div>
@@ -376,17 +419,26 @@ function InfoCard({ block, onClose }: { block: BlockAt; onClose: () => void }) {
         <BlockIcon id={block.id} meta={block.meta} size={32} />
         <div className="min-w-0 flex-1">
           <div className="text-sm leading-5 font-semibold">{blockName(block.id, block.meta)}</div>
-          <div className="leading-5 text-muted-foreground tabular-nums">ID: {block.id}:{block.meta}</div>
+          <div className="leading-5 text-muted-foreground tabular-nums">
+            ID: {block.id}:{block.meta}
+          </div>
           <div className="leading-5 text-muted-foreground tabular-nums">
             Положение: {block.x}, {block.y}, {block.z}
           </div>
         </div>
-        <button type="button" className="-mr-0.5 self-start text-muted-foreground hover:text-foreground [&_svg]:size-4" onClick={onClose} aria-label="Снять выделение">
+        <button
+          type="button"
+          className="-mr-0.5 self-start text-muted-foreground hover:text-foreground [&_svg]:size-4"
+          onClick={onClose}
+          aria-label="Снять выделение"
+        >
           <X />
         </button>
       </div>
       {desc && <div className="mt-2 leading-relaxed text-muted-foreground">{desc}</div>}
-      {!blockDef(block.id) && <div className="mt-2 text-muted-foreground">Нет в пуле просмотрщика — показан заглушкой.</div>}
+      {!blockDef(block.id) && (
+        <div className="mt-2 text-muted-foreground">Нет в пуле просмотрщика — показан заглушкой.</div>
+      )}
     </div>
   );
 }

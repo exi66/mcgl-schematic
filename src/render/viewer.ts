@@ -55,7 +55,12 @@ const PASSABLE = new Set(['barrier', 'fluid', 'redstoneWire', 'electricWire', 't
 
 function loadTexture(url: string): Promise<THREE.Texture> {
   return new Promise((resolve, reject) => {
-    new THREE.TextureLoader().load(url, (t) => resolve(pixelTexture(t)), undefined, () => reject(new Error(`Не загрузилась текстура ${url}`)));
+    new THREE.TextureLoader().load(
+      url,
+      (t) => resolve(pixelTexture(t)),
+      undefined,
+      () => reject(new Error(`Не загрузилась текстура ${url}`)),
+    );
   });
 }
 
@@ -104,7 +109,14 @@ export class Viewer {
   private controls?: OrbitControls;
   private explore?: ExploreControls;
   private mode: NavMode = 'orbit';
-  private display: DisplayState = { grid: true, ortho: false, background: null, dark: false, animate: true, labels: true };
+  private display: DisplayState = {
+    grid: true,
+    ortho: false,
+    background: null,
+    dark: false,
+    animate: true,
+    labels: true,
+  };
   /** Frames per second over the last second (for the FPS meter). */
   fps = 0;
   private fpsFrames = 0;
@@ -307,7 +319,10 @@ export class Viewer {
       this.plan.lookAt(c.target.x, 0, c.target.z);
     } else {
       const cam = this.camera;
-      const offset = cam.position.clone().sub(c.target).applyAxisAngle(new THREE.Vector3(0, 1, 0), angle);
+      const offset = cam.position
+        .clone()
+        .sub(c.target)
+        .applyAxisAngle(new THREE.Vector3(0, 1, 0), angle);
       cam.position.copy(c.target).add(offset);
       cam.lookAt(c.target);
     }
@@ -431,9 +446,22 @@ export class Viewer {
     this.materials = {
       solid: basic({ map: terrain, alphaTest: 0.1 }),
       cutout: basic({ map: terrain, alphaTest: 0.5, side: THREE.DoubleSide }),
-      translucent: basic({ map: terrain, transparent: true, depthWrite: false, side: THREE.DoubleSide, alphaTest: 0.02 }),
+      translucent: basic({
+        map: terrain,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        alphaTest: 0.02,
+      }),
       unknown: basic({ map: stub }),
-      ghost: basic({ map: terrain, transparent: true, opacity: GHOST_OPACITY, depthWrite: false, side: THREE.DoubleSide, alphaTest: 0.02 }),
+      ghost: basic({
+        map: terrain,
+        transparent: true,
+        opacity: GHOST_OPACITY,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        alphaTest: 0.02,
+      }),
       ghostUnknown: basic({ map: stub, transparent: true, opacity: GHOST_OPACITY, depthWrite: false }),
     };
     await Promise.all(
@@ -451,7 +479,13 @@ export class Viewer {
           this.models.set(name, {
             geometry: toGeometry(buildModelGeometry(def)),
             material: basic({ map: tex, alphaTest: 0.5, side: THREE.DoubleSide }),
-            ghost: basic({ map: tex, transparent: true, opacity: GHOST_OPACITY, depthWrite: false, side: THREE.DoubleSide }),
+            ghost: basic({
+              map: tex,
+              transparent: true,
+              opacity: GHOST_OPACITY,
+              depthWrite: false,
+              side: THREE.DoubleSide,
+            }),
           });
         } catch (e) {
           console.warn(`Модель ${name} не загрузилась:`, e);
@@ -534,7 +568,8 @@ export class Viewer {
     const s = this.schematic!;
     const st = this.state!;
     const vis = new Uint8Array(s.blocks.length);
-    const W = s.width, L = s.length;
+    const W = s.width,
+      L = s.length;
     const sl = st.slice;
     for (let i = 0; i < s.blocks.length; i++) {
       const id = s.blocks[i];
@@ -562,7 +597,9 @@ export class Viewer {
   private voxels(want: Visibility): Voxels {
     const s = this.schematic!;
     const vis = this.vis!;
-    const W = s.width, H = s.height, L = s.length;
+    const W = s.width,
+      H = s.height,
+      L = s.length;
     return {
       id: (x, y, z) => {
         if (x < 0 || y < 0 || z < 0 || x >= W || y >= H || z >= L) return 0;
@@ -612,7 +649,14 @@ export class Viewer {
     };
     for (let cz = 0; cz < s.length; cz += CHUNK)
       for (let cx = 0; cx < s.width; cx += CHUNK) {
-        const region = { x0: cx, y0: 0, z0: cz, x1: Math.min(s.width, cx + CHUNK), y1: s.height, z1: Math.min(s.length, cz + CHUNK) };
+        const region = {
+          x0: cx,
+          y0: 0,
+          z0: cz,
+          x1: Math.min(s.width, cx + CHUNK),
+          y1: s.height,
+          z1: Math.min(s.length, cz + CHUNK),
+        };
         const a = meshRegion(normal, region);
         add(a.solid, m.solid, 0);
         add(a.unknown, m.unknown, 0);
@@ -665,20 +709,33 @@ export class Viewer {
     const ndc =
       this.mode === 'explore' && this.exploreLocked()
         ? new THREE.Vector2(0, 0)
-        : new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+        : new THREE.Vector2(
+            ((clientX - rect.left) / rect.width) * 2 - 1,
+            -((clientY - rect.top) / rect.height) * 2 + 1,
+          );
     const ray = new THREE.Raycaster();
     ray.setFromCamera(ndc, this.camera);
     let o = ray.ray.origin;
     const d = ray.ray.direction;
     // Orthographic rays start at the near plane, possibly inside the build: back them off.
     if ((this.camera as THREE.OrthographicCamera).isOrthographicCamera) o = o.clone().addScaledVector(d, -1000);
-    const W = s.width, L = s.length;
-    return pickVoxel([o.x, o.y, o.z], [d.x, d.y, d.z], [s.width, s.height, s.length], (x, y, z) => vis[(y * L + z) * W + x] === 1, 5000);
+    const W = s.width,
+      L = s.length;
+    return pickVoxel(
+      [o.x, o.y, o.z],
+      [d.x, d.y, d.z],
+      [s.width, s.height, s.length],
+      (x, y, z) => vis[(y * L + z) * W + x] === 1,
+      5000,
+    );
   }
 
   private outline(color: number, size = 1.004): THREE.LineSegments {
     const geo = new THREE.EdgesGeometry(new THREE.BoxGeometry(size, size, size));
-    const l = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color, depthTest: false, transparent: true, opacity: 0.9 }));
+    const l = new THREE.LineSegments(
+      geo,
+      new THREE.LineBasicMaterial({ color, depthTest: false, transparent: true, opacity: 0.9 }),
+    );
     l.renderOrder = 10;
     this.scene.add(l);
     return l;

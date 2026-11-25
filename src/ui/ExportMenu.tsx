@@ -39,18 +39,28 @@ export function ExportMenu({ list }: { list: MaterialList }) {
     <Popover>
       <Tip content="Экспорт списка материалов">
         <PopoverTrigger asChild>
-          <button type="button" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground data-[state=open]:text-foreground [&_svg]:size-3.5">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground data-[state=open]:text-foreground [&_svg]:size-3.5"
+          >
             <Share /> Экспорт
           </button>
         </PopoverTrigger>
       </Tip>
       <PopoverContent side="bottom" align="start" className="w-64 p-2">
-        <div className="px-2 pt-1.5 pb-2 text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">Список материалов</div>
+        <div className="px-2 pt-1.5 pb-2 text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+          Список материалов
+        </div>
         {FORMATS.map((f) => (
           <div key={f.id} className="flex items-center gap-1 p-1">
             <span className="flex-1 pl-1 text-[12.5px]">{f.label}</span>
             <Tip content="Скопировать">
-              <button type="button" aria-label={`Скопировать ${f.label}`} className="p-1.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground [&_svg]:size-3.5" onClick={() => void copy(f)}>
+              <button
+                type="button"
+                aria-label={`Скопировать ${f.label}`}
+                className="p-1.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground [&_svg]:size-3.5"
+                onClick={() => void copy(f)}
+              >
                 {copied === f.id ? <Check /> : <Copy />}
               </button>
             </Tip>

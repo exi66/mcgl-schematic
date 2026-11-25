@@ -28,7 +28,10 @@ export function SlicePanel({
               aria-checked={slice.axis === a}
               title={a === 'y' ? 'Срез по Y (слои)' : `Срез по ${a.toUpperCase()}`}
               onClick={() => onChange({ ...slice, axis: a, value: size[a] - 1 })}
-              className={cn('h-6 flex-1 text-[11px] font-semibold uppercase', slice.axis === a ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}
+              className={cn(
+                'h-6 flex-1 text-[11px] font-semibold uppercase',
+                slice.axis === a ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+              )}
             >
               {a}
             </button>
@@ -40,16 +43,34 @@ export function SlicePanel({
         <div className="mt-0.5 text-[11px] text-muted-foreground">из {count}</div>
       </div>
       <div className="flex h-48 justify-center">
-        <Slider orientation="vertical" min={0} max={Math.max(0, count - 1)} step={1} value={[slice.value]} onValueChange={([v]) => set(v)} aria-label="Положение среза" />
+        <Slider
+          orientation="vertical"
+          min={0}
+          max={Math.max(0, count - 1)}
+          step={1}
+          value={[slice.value]}
+          onValueChange={([v]) => set(v)}
+          aria-label="Положение среза"
+        />
       </div>
       <div className="flex gap-1">
         <Tip content="Предыдущий слой [">
-          <button type="button" className="h-7 flex-1 border text-sm hover:bg-muted" onClick={() => set(slice.value - 1)} aria-label="Предыдущий слой">
+          <button
+            type="button"
+            className="h-7 flex-1 border text-sm hover:bg-muted"
+            onClick={() => set(slice.value - 1)}
+            aria-label="Предыдущий слой"
+          >
             [
           </button>
         </Tip>
         <Tip content="Следующий слой ]">
-          <button type="button" className="h-7 flex-1 border text-sm hover:bg-muted" onClick={() => set(slice.value + 1)} aria-label="Следующий слой">
+          <button
+            type="button"
+            className="h-7 flex-1 border text-sm hover:bg-muted"
+            onClick={() => set(slice.value + 1)}
+            aria-label="Следующий слой"
+          >
             ]
           </button>
         </Tip>
@@ -59,14 +80,22 @@ export function SlicePanel({
           type="button"
           aria-pressed={slice.isolate}
           aria-label="Изолировать слой"
-          className={cn('flex h-7 items-center justify-center border [&_svg]:size-4', slice.isolate ? 'bg-primary text-primary-foreground' : 'hover:bg-muted')}
+          className={cn(
+            'flex h-7 items-center justify-center border [&_svg]:size-4',
+            slice.isolate ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
+          )}
           onClick={() => onChange({ ...slice, isolate: !slice.isolate })}
         >
           {slice.isolate ? <EyeOff /> : <Eye />}
         </button>
       </Tip>
       <Tip content="Закрыть срез (L)">
-        <button type="button" aria-label="Закрыть срез" className="flex h-7 items-center justify-center border text-muted-foreground hover:bg-muted hover:text-foreground [&_svg]:size-4" onClick={onClose}>
+        <button
+          type="button"
+          aria-label="Закрыть срез"
+          className="flex h-7 items-center justify-center border text-muted-foreground hover:bg-muted hover:text-foreground [&_svg]:size-4"
+          onClick={onClose}
+        >
           <X />
         </button>
       </Tip>

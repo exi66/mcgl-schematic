@@ -65,7 +65,13 @@ export function BlockList({
         const isHl = highlight === st.key;
         return (
           <li key={st.key}>
-            <div className={cn('group flex items-center gap-2 px-1.5 py-1 text-sm', isHl ? 'bg-accent' : 'hover:bg-muted', isHidden && 'opacity-45')}>
+            <div
+              className={cn(
+                'group flex items-center gap-2 px-1.5 py-1 text-sm',
+                isHl ? 'bg-accent' : 'hover:bg-muted',
+                isHidden && 'opacity-45',
+              )}
+            >
               <button
                 type="button"
                 className="flex min-w-0 flex-1 items-center gap-2 text-left"
@@ -73,13 +79,20 @@ export function BlockList({
                 title={`${st.name} — ${st.key}${known ? '' : ' (нет в пуле, заглушка)'}\n${isHidden ? 'Показать' : 'Скрыть'}`}
               >
                 <BlockIcon id={st.id} meta={st.iconMeta} />
-                <span className={cn('min-w-0 flex-1 truncate', !known && 'text-muted-foreground italic')}>{st.name}</span>
+                <span className={cn('min-w-0 flex-1 truncate', !known && 'text-muted-foreground italic')}>
+                  {st.name}
+                </span>
                 <span className="text-xs text-muted-foreground tabular-nums">{fmt.format(st.count)}</span>
-                <span className="text-muted-foreground opacity-0 group-hover:opacity-100 [&_svg]:size-3.5">{isHidden ? <EyeOff /> : <Eye />}</span>
+                <span className="text-muted-foreground opacity-0 group-hover:opacity-100 [&_svg]:size-3.5">
+                  {isHidden ? <EyeOff /> : <Eye />}
+                </span>
               </button>
               <button
                 type="button"
-                className={cn('p-0.5 text-muted-foreground hover:text-foreground [&_svg]:size-3.5', isHl ? 'text-primary' : 'opacity-0 group-hover:opacity-100')}
+                className={cn(
+                  'p-0.5 text-muted-foreground hover:text-foreground [&_svg]:size-3.5',
+                  isHl ? 'text-primary' : 'opacity-0 group-hover:opacity-100',
+                )}
                 onClick={() => onHighlight(isHl ? null : st.key)}
                 title={isHl ? 'Снять подсветку' : 'Подсветить: остальные блоки станут полупрозрачными'}
                 aria-label="Подсветить"

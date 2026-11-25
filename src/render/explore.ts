@@ -166,9 +166,12 @@ export class ExploreControls {
 
   private collides(p: THREE.Vector3): boolean {
     if (p.y < this.world.floorY) return true;
-    const x0 = Math.floor(p.x - HALF_W), x1 = Math.floor(p.x + HALF_W - 1e-6);
-    const y0 = Math.floor(p.y), y1 = Math.floor(p.y + HEIGHT - 1e-6);
-    const z0 = Math.floor(p.z - HALF_W), z1 = Math.floor(p.z + HALF_W - 1e-6);
+    const x0 = Math.floor(p.x - HALF_W),
+      x1 = Math.floor(p.x + HALF_W - 1e-6);
+    const y0 = Math.floor(p.y),
+      y1 = Math.floor(p.y + HEIGHT - 1e-6);
+    const z0 = Math.floor(p.z - HALF_W),
+      z1 = Math.floor(p.z + HALF_W - 1e-6);
     for (let y = y0; y <= y1; y++)
       for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) if (this.world.solid(x, y, z)) return true;
     return false;

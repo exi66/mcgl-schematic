@@ -50,7 +50,9 @@ export function schematicFromNbt(root: NbtCompound): Schematic {
     warnings.push('Нет массива Data или неверная длина — metadata считается 0');
   }
   const te = Array.isArray(root.TileEntities)
-    ? (root.TileEntities.filter((t) => typeof t === 'object' && !Array.isArray(t) && !(ArrayBuffer.isView(t))) as NbtCompound[])
+    ? (root.TileEntities.filter(
+        (t) => typeof t === 'object' && !Array.isArray(t) && !ArrayBuffer.isView(t),
+      ) as NbtCompound[])
     : [];
   return { width, height, length, blocks, data, tileEntities: te, warnings };
 }

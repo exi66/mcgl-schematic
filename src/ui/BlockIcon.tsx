@@ -23,12 +23,25 @@ function iconSide(id: number, render: RenderKind, meta: number): Side {
  * barrier) come from fx-icons.png, generated at build time from the same effects (last frame).
  * Models get a colour swatch, blocks outside the pool — an id badge.
  */
-export function BlockIcon({ id, meta, size = 20, className }: { id: number; meta: number; size?: number; className?: string }) {
+export function BlockIcon({
+  id,
+  meta,
+  size = 20,
+  className,
+}: {
+  id: number;
+  meta: number;
+  size?: number;
+  className?: string;
+}) {
   const d = blockDef(id);
   if (!d) {
     return (
       <span
-        className={cn('inline-flex shrink-0 items-center justify-center bg-neutral-500 text-[9px] font-bold text-white', className)}
+        className={cn(
+          'inline-flex shrink-0 items-center justify-center bg-neutral-500 text-[9px] font-bold text-white',
+          className,
+        )}
         style={{ width: size, height: size }}
       >
         {id}
@@ -36,7 +49,12 @@ export function BlockIcon({ id, meta, size = 20, className }: { id: number; meta
     );
   }
   if (d.model?.(meta)) {
-    return <span className={cn('inline-block shrink-0', className)} style={{ width: size, height: size, backgroundColor: d.color }} />;
+    return (
+      <span
+        className={cn('inline-block shrink-0', className)}
+        style={{ width: size, height: size, backgroundColor: d.color }}
+      />
+    );
   }
   const tex = d.tex(iconSide(d.id, d.render, meta), meta);
   const k = size / 16;
@@ -58,5 +76,10 @@ export function BlockIcon({ id, meta, size = 20, className }: { id: number; meta
           backgroundColor: wire ? d.color : undefined,
           backgroundBlendMode: wire ? 'multiply' : undefined,
         };
-  return <span className={cn('pixelated inline-block shrink-0', className)} style={{ width: size, height: size, ...style }} />;
+  return (
+    <span
+      className={cn('pixelated inline-block shrink-0', className)}
+      style={{ width: size, height: size, ...style }}
+    />
+  );
 }

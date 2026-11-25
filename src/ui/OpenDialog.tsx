@@ -33,7 +33,13 @@ export function OpenDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} title="Открыть схематику" description="Ссылка на файл .schematic или файл с диска." className="w-[min(520px,calc(100vw-32px))]">
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Открыть схематику"
+      description="Ссылка на файл .schematic или файл с диска."
+      className="w-[min(520px,calc(100vw-32px))]"
+    >
       <form
         className="flex flex-col gap-2"
         onSubmit={(e) => {
@@ -44,7 +50,10 @@ export function OpenDialog({
           onOpenChange(false);
         }}
       >
-        <label htmlFor="open-url" className="text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+        <label
+          htmlFor="open-url"
+          className="text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase"
+        >
           Ссылка
         </label>
         <div className="flex gap-2">
@@ -64,7 +73,9 @@ export function OpenDialog({
             Открыть
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">Сервер должен разрешать чтение с других сайтов (CORS): подойдут raw.githubusercontent.com, gist, Discord CDN.</p>
+        <p className="text-xs text-muted-foreground">
+          Сервер должен разрешать чтение с других сайтов (CORS): подойдут raw.githubusercontent.com, gist, Discord CDN.
+        </p>
       </form>
 
       <div className="my-5 flex items-center gap-3 text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
@@ -73,10 +84,16 @@ export function OpenDialog({
         <span className="h-px flex-1 bg-border" />
       </div>
 
-      <input ref={fileRef} type="file" accept=".schematic,application/octet-stream" className="hidden" onChange={(e) => {
-        pick(e.target.files?.[0]);
-        e.target.value = '';
-      }} />
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".schematic,application/octet-stream"
+        className="hidden"
+        onChange={(e) => {
+          pick(e.target.files?.[0]);
+          e.target.value = '';
+        }}
+      />
       <button
         type="button"
         onClick={() => fileRef.current?.click()}

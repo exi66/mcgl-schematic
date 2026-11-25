@@ -53,11 +53,22 @@ const SECTIONS: [string, Row[]][] = [
 
 export function HotkeysDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} title="Горячие клавиши" description={<>Нажмите <Kbd>?</Kbd>, чтобы открыть снова.</>}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Горячие клавиши"
+      description={
+        <>
+          Нажмите <Kbd>?</Kbd>, чтобы открыть снова.
+        </>
+      }
+    >
       <div className="grid gap-x-10 gap-y-7 sm:grid-cols-2">
         {SECTIONS.map(([title, rows]) => (
           <section key={title}>
-            <h3 className="mb-3 border-b pb-1.5 text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">{title}</h3>
+            <h3 className="mb-3 border-b pb-1.5 text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+              {title}
+            </h3>
             <ul className="flex flex-col gap-1.5 text-sm">
               {rows.map(([label, keys]) => (
                 <li key={label} className="flex items-center justify-between gap-3">

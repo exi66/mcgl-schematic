@@ -14,7 +14,8 @@ export interface MaterialList {
 }
 
 const total = (l: MaterialList) => l.rows.reduce((a, r) => a + r.count, 0);
-const sorted = (l: MaterialList) => [...l.rows].sort((a, b) => b.count - a.count || a.key.localeCompare(b.key, 'en', { numeric: true }));
+const sorted = (l: MaterialList) =>
+  [...l.rows].sort((a, b) => b.count - a.count || a.key.localeCompare(b.key, 'en', { numeric: true }));
 
 /** Markdown: heading, size and total, then a table. */
 export function materialsMarkdown(l: MaterialList): string {

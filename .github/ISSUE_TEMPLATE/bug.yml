@@ -1,0 +1,31 @@
+name: Ошибка
+description: Что-то работает не так или выглядит не так, как в игре
+labels: ['ошибка']
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: Что случилось
+      description: Что вы делали и что пошло не так. Если блок выглядит не так, как в игре, — какой блок (название или ID).
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Как должно быть
+      description: Скриншот из игры очень помогает.
+  - type: input
+    id: link
+    attributes:
+      label: Ссылка на схематику или страницу просмотрщика
+      description: Если можно — ссылка, по которой ошибка повторяется (или приложите файл .schematic ниже).
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Скриншоты и файлы
+      description: Перетащите сюда скриншоты или .schematic (можно упаковать в .zip).
+  - type: input
+    id: browser
+    attributes:
+      label: Браузер
+      placeholder: Chrome 140, Firefox 145, Safari 19…

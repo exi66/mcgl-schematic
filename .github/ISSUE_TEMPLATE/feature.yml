@@ -1,0 +1,15 @@
+name: Предложение
+description: Идея, как сделать просмотрщик удобнее
+labels: ['предложение']
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Что хотелось бы
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Зачем
+      description: Какую задачу это решит — например, в какой постройке это помогло бы разобраться.

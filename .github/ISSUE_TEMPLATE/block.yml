@@ -1,0 +1,21 @@
+name: Добавить блок
+description: Блок показывается серым кубом с номером или его нет совсем
+labels: ['блок']
+body:
+  - type: input
+    id: block
+    attributes:
+      label: Блок
+      description: Название и ID с метой, как в карточке блока (например, «Сундук», 54:0).
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Где используется
+      description: В какой постройке или структуре он встречается.
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Как выглядит в игре
+      description: Скриншоты блока с разных сторон, если у него особая форма или он меняется от соседей.

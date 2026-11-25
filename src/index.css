@@ -1,0 +1,210 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+@import '@fontsource-variable/geist-mono';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.5 0.134 242.749);
+  --primary-foreground: oklch(0.977 0.013 236.62);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.828 0.111 230.318);
+  --chart-2: oklch(0.685 0.169 237.323);
+  --chart-3: oklch(0.588 0.158 241.966);
+  --chart-4: oklch(0.5 0.134 242.749);
+  --chart-5: oklch(0.443 0.11 240.79);
+  --radius: 0;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.588 0.158 241.966);
+  --sidebar-primary-foreground: oklch(0.977 0.013 236.62);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.443 0.11 240.79);
+  --primary-foreground: oklch(0.977 0.013 236.62);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.828 0.111 230.318);
+  --chart-2: oklch(0.685 0.169 237.323);
+  --chart-3: oklch(0.588 0.158 241.966);
+  --chart-4: oklch(0.5 0.134 242.749);
+  --chart-5: oklch(0.443 0.11 240.79);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.685 0.169 237.323);
+  --sidebar-primary-foreground: oklch(0.293 0.066 243.157);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@theme inline {
+  --font-heading: var(--font-mono);
+  --font-mono: 'Geist Mono Variable', monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+    /* The focus ring colour is set in advance: transition-colors animates outline-color too, and from
+       the default (currentColor, white in the dark theme) the ring would fade from white to grey. */
+    outline-color: var(--ring);
+    outline-color: color-mix(in oklab, var(--ring) 55%, transparent);
+  }
+
+  /*
+   * Keyboard focus (Tab) in the theme colours, the same for every element and browser.
+   * Square like the rest of the UI; drawn with outline so it is never clipped by overflow or shadows.
+   */
+  :focus-visible {
+    outline-style: solid;
+    outline-width: 3px;
+    outline-offset: 0;
+  }
+  /* Fields: a solid ring next to the border. */
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    border-color: var(--ring);
+    outline-offset: 0;
+  }
+  /* Inside scroll areas (block list) the ring goes inside, otherwise the viewport clips it. */
+  [data-slot='scroll-area-viewport'] :focus-visible {
+    outline-offset: -3px;
+  }
+  /* Mouse clicks do not show the ring (old browsers without :focus-visible fall back to :focus). */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+  /* Elements focused only by script (dialogs, popovers, scroll viewports): no ring. */
+  [tabindex='-1']:focus-visible,
+  [data-radix-popper-content-wrapper] > :focus-visible[role='dialog'],
+  [role='dialog']:focus-visible {
+    outline: none;
+  }
+  /* Firefox: remove the inner dotted border of buttons. */
+  button::-moz-focus-inner,
+  [type='button']::-moz-focus-inner,
+  [type='submit']::-moz-focus-inner {
+    border: 0;
+    padding: 0;
+  }
+  /* Firefox colour picker / range: same ring. */
+  :-moz-focusring {
+    outline-style: solid;
+    outline-width: 3px;
+  }
+  :-moz-focusring:not(:focus-visible) {
+    outline: none;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  /* The preset (base-sera) sets the whole UI in Geist Mono. */
+  html {
+    @apply font-mono;
+  }
+
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled),
+  [role='menuitem'],
+  [role='option'],
+  label:has(button),
+  summary {
+    cursor: pointer;
+  }
+}
+
+.pixelated {
+  image-rendering: pixelated;
+}
+
+/* Background colour picker in the display menu (square, full width). */
+.viewer-color-picker.react-colorful {
+  width: 100%;
+  height: 150px;
+}
+.viewer-color-picker .react-colorful__saturation,
+.viewer-color-picker .react-colorful__hue {
+  border-radius: 0;
+}
+.viewer-color-picker .react-colorful__hue {
+  height: 14px;
+}
+.viewer-color-picker .react-colorful__pointer {
+  width: 16px;
+  height: 16px;
+}

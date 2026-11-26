@@ -4,14 +4,20 @@ import { loadFromFile, loadFromUrl } from './app/load';
 import { readUrlState, shareLink } from './app/url';
 import type { DisplayState, NavMode, SliceState, ViewState } from './render/viewer';
 import type { Schematic } from './schematic/schematic';
-import { BlockList, blockStats } from './ui/BlockList';
-import { HotkeysDialog } from './ui/HotkeysDialog';
-import { Button, cn, ScrollArea, Tip, TooltipProvider } from './ui/kit';
-import { SlicePanel } from './ui/SlicePanel';
-import { Toolbar } from './ui/Toolbar';
-import { ExportMenu } from './ui/ExportMenu';
-import { OpenDialog } from './ui/OpenDialog';
-import { Viewport, type ViewportHandle } from './ui/Viewport';
+import { BlockList, blockStats } from './components/BlockList';
+import { HotkeysDialog } from './components/HotkeysDialog';
+import { SlicePanel } from './components/SlicePanel';
+import { Toolbar } from './components/Toolbar';
+import { ExportMenu } from './components/ExportMenu';
+import { OpenDialog } from './components/OpenDialog';
+import { Viewport, type CardAction, type ViewportHandle } from './components/Viewport';
+import { PLUGINS, type BlockRef, type Plugin, type PluginHost } from './plugins';
+import { blockIndex } from './schematic/schematic';
+import { Tip } from './components/Tip';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const EXAMPLE = `${import.meta.env.BASE_URL}examples/all-blocks.schematic`;
 const initial = readUrlState();
@@ -66,6 +72,8 @@ export default function App() {
   const [dragging, setDragging] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const viewportRef = useRef<ViewportHandle>(null);
+  /** The plugin panel opened by a block action (src/plugins). */
+  const [pluginRun, setPluginRun] = useState<{ plugin: Plugin; block: BlockRef; action: string } | null>(null);
   const firstLoad = useRef(true);
 
   useEffect(() => {
@@ -196,10 +204,50 @@ export default function App() {
   );
   const onError = useCallback((m: string) => setError(m), []);
 
+  const makeHost = useCallback(
+    (plugin: Plugin): PluginHost | null =>
+      schematic && {
+        schematic,
+        block: (x, y, z) => {
+          if (x < 0 || y < 0 || z < 0 || x >= schematic.width || y >= schematic.height || z >= schematic.length)
+            return { id: 0, meta: 0 };
+          const i = blockIndex(schematic, x, y, z);
+          return { id: schematic.blocks[i], meta: schematic.data[i] };
+        },
+        setOverlay: (object) => viewportRef.current?.setOverlay(plugin.id, object),
+      },
+    [schematic],
+  );
+
+  const blockActions = useCallback(
+    (block: BlockRef): CardAction[] =>
+      PLUGINS.flatMap((plugin) => {
+        const host = makeHost(plugin);
+        if (!host || !plugin.blockActions) return [];
+        return plugin.blockActions(block, host).map((a) => ({
+          key: `${plugin.id}:${a.id}`,
+          label: a.label,
+          icon: a.icon,
+          run: () => setPluginRun({ plugin, block, action: a.id }),
+        }));
+      }),
+    [makeHost],
+  );
+
+  const closePlugin = useCallback(() => {
+    if (pluginRun) viewportRef.current?.setOverlay(pluginRun.plugin.id, null);
+    setPluginRun(null);
+  }, [pluginRun]);
+
+  // A new schematic closes the plugin panel (its layer belongs to the old one).
+  useEffect(() => {
+    setPluginRun(null);
+  }, [schematic]);
+
   const fmt = new Intl.NumberFormat('ru-RU');
 
   return (
-    <TooltipProvider delayDuration={300}>
+    <TooltipProvider delay={300}>
       <div
         className="flex h-full flex-col"
         onDragOver={(e) => {
@@ -259,9 +307,9 @@ export default function App() {
             className="flex items-start gap-3 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-sm whitespace-pre-line text-destructive"
           >
             <span className="flex-1">{error}</span>
-            <button type="button" className="text-xs underline" onClick={() => setError(null)}>
+            <Button variant="link" size="xs" className="h-auto p-0 text-destructive" onClick={() => setError(null)}>
               закрыть
-            </button>
+            </Button>
           </div>
         )}
 
@@ -272,33 +320,36 @@ export default function App() {
                 <h2 className="flex-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Блоки</h2>
                 <ExportMenu list={materials} />
                 {(hidden.size > 0 || highlight !== null) && (
-                  <button
-                    type="button"
-                    className="text-xs text-primary hover:underline"
+                  <Button
+                    variant="link"
+                    size="xs"
+                    className="-my-1 px-0"
                     onClick={() => {
                       setHidden(new Set());
                       setHighlight(null);
                     }}
                   >
                     показать все
-                  </button>
+                  </Button>
                 )}
               </div>
-              <ScrollArea className="min-h-0 flex-1" viewportClassName="px-1.5 pb-3">
-                <BlockList
-                  stats={stats}
-                  hidden={hidden}
-                  highlight={highlight}
-                  onToggleHidden={(id) =>
-                    setHidden((h) => {
-                      const n = new Set(h);
-                      if (n.has(id)) n.delete(id);
-                      else n.add(id);
-                      return n;
-                    })
-                  }
-                  onHighlight={setHighlight}
-                />
+              <ScrollArea className="min-h-0 flex-1">
+                <div className="px-1.5 pb-3">
+                  <BlockList
+                    stats={stats}
+                    hidden={hidden}
+                    highlight={highlight}
+                    onToggleHidden={(id) =>
+                      setHidden((h) => {
+                        const n = new Set(h);
+                        if (n.has(id)) n.delete(id);
+                        else n.add(id);
+                        return n;
+                      })
+                    }
+                    onHighlight={setHighlight}
+                  />
+                </div>
               </ScrollArea>
             </aside>
           )}
@@ -315,6 +366,7 @@ export default function App() {
               onMeasureDone={() => setMeasureMode(false)}
               onExploreLock={setExploreLocked}
               onError={onError}
+              blockActions={blockActions}
             />
             {schematic && (
               <>
@@ -372,6 +424,16 @@ export default function App() {
                   />
                 </div>
               </>
+            )}
+            {pluginRun && pluginRun.plugin.Panel && makeHost(pluginRun.plugin) && (
+              <div className="absolute top-3 left-3 z-20 w-80">
+                <pluginRun.plugin.Panel
+                  host={makeHost(pluginRun.plugin)!}
+                  block={pluginRun.block}
+                  action={pluginRun.action}
+                  onClose={closePlugin}
+                />
+              </div>
             )}
             {!schematic && (
               <Welcome loading={loading} onOpen={() => setOpenDialog(true)} onExample={() => void openUrl(EXAMPLE)} />

@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { blockDef, variantKey, variantMeta, variantName } from '../blocks/pool';
 import type { Schematic } from '../schematic/schematic';
 import { BlockIcon } from './BlockIcon';
-import { cn } from './kit';
+import { cn } from '@/lib/utils';
 
 export interface BlockStat {
   /** Variant key "id:meta" (see variantKey). */

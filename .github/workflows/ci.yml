@@ -1,13 +1,19 @@
+# Checks: lint, formatting, types, tests, build.
+# Runs on pushes and pull requests to main; pages.yml also calls it before every deploy.
 name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
+    branches: [main]
+  workflow_call:
 
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # A deploy calls this workflow too: keep its run separate from the push/PR runs.
+  group: ci-${{ github.workflow_ref }}-${{ github.ref }}
+  # Superseded pushes and PR updates are cancelled; release (tag) checks always finish.
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
   check:

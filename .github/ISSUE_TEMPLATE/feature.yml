@@ -1,5 +1,5 @@
 name: Предложение
-description: Идея, как сделать просмотрщик удобнее
+description: Идея, как сделать сайт удобнее
 labels: ['предложение']
 body:
   - type: textarea

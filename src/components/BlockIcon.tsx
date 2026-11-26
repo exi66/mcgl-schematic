@@ -1,7 +1,7 @@
 import { blockDef, type RenderKind, type Side } from '../blocks/pool';
 import { tileX, tileY } from '../render/atlas';
 import { FX_SLOTS } from '../render/texfx';
-import { cn } from './kit';
+import { cn } from '@/lib/utils';
 
 const BASE = import.meta.env.BASE_URL;
 const FX_INDEX = new Map<number, number>(FX_SLOTS.map((s, i) => [s, i]));

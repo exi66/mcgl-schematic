@@ -769,6 +769,23 @@ export class Viewer {
     this.requestRender();
   }
 
+  private pluginOverlays = new Map<string, THREE.Object3D>();
+
+  /** A plugin's 3D layer: shows, replaces or (null) removes the object under the plugin's key. */
+  setPluginOverlay(key: string, object: THREE.Object3D | null): void {
+    const old = this.pluginOverlays.get(key);
+    if (old) {
+      this.scene.remove(old);
+      disposeObject(old);
+      this.pluginOverlays.delete(key);
+    }
+    if (object) {
+      this.pluginOverlays.set(key, object);
+      this.scene.add(object);
+    }
+    this.requestRender();
+  }
+
   dispose(): void {
     this.disposed = true;
     cancelAnimationFrame(this.frame);

@@ -1,17 +1,29 @@
 import { X } from 'lucide-react';
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { type ReactNode, forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { blockDef, blockDescription, blockName } from '../blocks/pool';
 import type { Cell } from '../render/overlays';
 import { Viewer, type DisplayState, type NavMode, type ViewState } from '../render/viewer';
 import { blockIndex, type Schematic } from '../schematic/schematic';
 import { BlockIcon } from './BlockIcon';
-import { Kbd } from './kit';
+import { Button } from '@/components/ui/button';
+import { Kbd } from '@/components/ui/kbd';
+import type { Object3D } from 'three';
 
 export interface ViewportHandle {
   fit(): void;
   rotate(dir: 1 | -1): void;
   /** Clears selection and measurement; returns true if there was something to clear. */
   clear(): boolean;
+  /** A plugin's 3D layer (see src/plugins). */
+  setOverlay(key: string, object: Object3D | null): void;
+}
+
+/** An action for the selected block, offered by a plugin (shown in the block card). */
+export interface CardAction {
+  key: string;
+  label: string;
+  icon?: ReactNode;
+  run: () => void;
 }
 
 interface BlockAt extends Cell {
@@ -32,6 +44,8 @@ interface Props {
   /** Explore mode grabbed / released the mouse (the toolbar gives way to the controls hint). */
   onExploreLock: (locked: boolean) => void;
   onError: (msg: string) => void;
+  /** Plugin actions for the selected block. */
+  blockActions?: (block: BlockAt) => CardAction[];
 }
 
 /** Calls fn at most once per animation frame with the latest arguments. */
@@ -52,7 +66,19 @@ function useRafThrottle<A extends unknown[]>(fn: (...a: A) => void): (...a: A) =
 }
 
 export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
-  { schematic, view, display, navMode, measureMode, showFps, hoverTips, onMeasureDone, onExploreLock, onError },
+  {
+    schematic,
+    view,
+    display,
+    navMode,
+    measureMode,
+    showFps,
+    hoverTips,
+    onMeasureDone,
+    onExploreLock,
+    onError,
+    blockActions,
+  },
   ref,
 ) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -90,6 +116,7 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
         clearAll();
         return had;
       },
+      setOverlay: (key, object) => viewerRef.current?.setPluginOverlay(key, object),
     }),
     [selected, measure, clearAll],
   );
@@ -247,6 +274,7 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
         <div className="absolute top-3 right-3 z-10 w-72">
           <InfoCard
             block={selected}
+            actions={blockActions?.(selected) ?? []}
             onClose={() => {
               setSelected(null);
               v?.setSelected(null);
@@ -364,14 +392,15 @@ function MeasureCard({ a, b, schematic, onClose }: { a: Cell; b: Cell; schematic
           </div>
           <div className="text-xs text-muted-foreground">{fmt.format(w * h * l)} клеток</div>
         </div>
-        <button
-          type="button"
-          className="text-muted-foreground hover:text-foreground [&_svg]:size-4"
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className="-mr-1 text-muted-foreground"
           onClick={onClose}
           aria-label="Убрать измерение"
         >
           <X />
-        </button>
+        </Button>
       </div>
       <div className="px-3 py-2.5">
         <div className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">Блоков внутри</div>
@@ -411,7 +440,7 @@ function HoverCard({ block, style }: { block: BlockAt; style?: React.CSSProperti
   );
 }
 
-function InfoCard({ block, onClose }: { block: BlockAt; onClose: () => void }) {
+function InfoCard({ block, actions, onClose }: { block: BlockAt; actions: CardAction[]; onClose: () => void }) {
   const desc = blockDescription(block.id, block.meta);
   return (
     <div className="border bg-card/95 p-3 text-xs shadow-lg backdrop-blur">
@@ -426,18 +455,29 @@ function InfoCard({ block, onClose }: { block: BlockAt; onClose: () => void }) {
             Положение: {block.x}, {block.y}, {block.z}
           </div>
         </div>
-        <button
-          type="button"
-          className="-mr-0.5 self-start text-muted-foreground hover:text-foreground [&_svg]:size-4"
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className="-mr-1 self-start text-muted-foreground"
           onClick={onClose}
           aria-label="Снять выделение"
         >
           <X />
-        </button>
+        </Button>
       </div>
       {desc && <div className="mt-2 leading-relaxed text-muted-foreground">{desc}</div>}
       {!blockDef(block.id) && (
-        <div className="mt-2 text-muted-foreground">Нет в пуле просмотрщика — показан заглушкой.</div>
+        <div className="mt-2 text-muted-foreground">Блок пока не поддерживается — показан заглушкой.</div>
+      )}
+      {actions.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {actions.map((a) => (
+            <Button key={a.key} variant="outline" size="xs" onClick={a.run}>
+              {a.icon}
+              {a.label}
+            </Button>
+          ))}
+        </div>
       )}
     </div>
   );

@@ -2,7 +2,7 @@ import { X } from 'lucide-react';
 import { type ReactNode, forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { blockDef, blockDescription, blockName } from '../blocks/pool';
 import type { Cell } from '../render/overlays';
-import { Viewer, type DisplayState, type NavMode, type ViewState } from '../render/viewer';
+import { Viewer, type CameraPose, type DisplayState, type NavMode, type ViewState } from '../render/viewer';
 import { blockIndex, type Schematic } from '../schematic/schematic';
 import { BlockIcon } from './BlockIcon';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,10 @@ interface Props {
   onError: (msg: string) => void;
   /** Plugin actions for the selected block. */
   blockActions?: (block: BlockAt) => CardAction[];
+  /** Camera from the link: applied once, to the first schematic shown. */
+  initialPose?: CameraPose;
+  /** The camera moved (null — back at the default framing). Called often: debounce on the other side. */
+  onPose?: (pose: CameraPose | null) => void;
 }
 
 /** Calls fn at most once per animation frame with the latest arguments. */
@@ -78,9 +82,16 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
     onExploreLock,
     onError,
     blockActions,
+    initialPose,
+    onPose,
   },
   ref,
 ) {
+  const pendingPose = useRef(initialPose);
+  const onPoseRef = useRef(onPose);
+  useEffect(() => {
+    onPoseRef.current = onPose;
+  }, [onPose]);
   const hostRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Viewer | null>(null);
   const shownRef = useRef<Schematic | null>(null);
@@ -130,6 +141,7 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
     v.onExploreLock = (l) => setLocked(l);
     v.onCameraChange = () => {
       if (v.navMode === 'explore') bump();
+      onPoseRef.current?.(v.cameraPose());
     };
     return () => {
       v.dispose();
@@ -159,7 +171,11 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
     const fresh = shownRef.current !== schematic;
     const p = fresh ? v.setSchematic(schematic, view) : v.update(view);
     shownRef.current = schematic;
-    p.catch((e: Error) => onError(e.message));
+    p.then(() => {
+      const pose = pendingPose.current;
+      pendingPose.current = undefined;
+      if (fresh && pose) v.applyPose(pose);
+    }).catch((e: Error) => onError(e.message));
     setHover(null);
     v.setHover(null);
     if (fresh) {

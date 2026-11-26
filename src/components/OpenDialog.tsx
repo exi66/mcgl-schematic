@@ -1,5 +1,6 @@
 import { FileUp, Link2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { canPickFile, pickSchematicFile } from '../app/pick-file';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -14,6 +15,7 @@ export function OpenDialog({
   onUrl,
   onFile,
   onExample,
+  onError,
   loading,
 }: {
   open: boolean;
@@ -21,6 +23,7 @@ export function OpenDialog({
   onUrl: (url: string) => void;
   onFile: (f: File) => void;
   onExample: () => void;
+  onError: (message: string) => void;
   loading: boolean;
 }) {
   const [url, setUrl] = useState('');
@@ -31,7 +34,7 @@ export function OpenDialog({
     if (!open) setOver(false);
   }, [open]);
 
-  const pick = (f: File | undefined) => {
+  const pick = (f: File | null | undefined) => {
     if (!f) return;
     onFile(f);
     onOpenChange(false);
@@ -96,7 +99,10 @@ export function OpenDialog({
         />
         <button
           type="button"
-          onClick={() => fileRef.current?.click()}
+          onClick={() => {
+            if (!canPickFile()) fileRef.current?.click();
+            else pickSchematicFile().then(pick, (e: Error) => onError(e.message));
+          }}
           onDragOver={(e) => {
             e.preventDefault();
             e.stopPropagation();

@@ -1,8 +1,8 @@
 import { FolderOpen, Moon, PanelLeftClose, PanelLeftOpen, Sun } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { loadFromFile, loadFromUrl } from './app/load';
-import { readUrlState, shareLink } from './app/url';
-import type { DisplayState, NavMode, SliceState, ViewState } from './render/viewer';
+import { appRoot, readUrlState, viewLink } from './app/url';
+import type { CameraPose, DisplayState, NavMode, SliceState, ViewState } from './render/viewer';
 import type { Schematic } from './schematic/schematic';
 import { BlockList, blockStats } from './components/BlockList';
 import { HotkeysDialog } from './components/HotkeysDialog';
@@ -19,27 +19,59 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
+const APP_NAME = 'mcgl-schematic';
 const EXAMPLE = `${import.meta.env.BASE_URL}examples/all-blocks.schematic`;
 const initial = readUrlState();
 
-function useStored<T>(key: string, init: T): [T, (v: T | ((p: T) => T)) => void] {
+/**
+ * Keys are prefixed with the app name: every project of exi66.github.io shares one localStorage. The theme key is
+ * shared on purpose (one theme across the projects).
+ */
+const storageKey = (key: string) => (key === 'theme-dark' ? key : `${APP_NAME}:${key}`);
+
+/**
+ * A setting kept in localStorage. `override` (from the link) wins for this page and is not saved; the third value
+ * says it is still in force. Changing the value saves it and ends the override.
+ */
+function useStored<T>(key: string, init: T, override?: T): [T, (v: T | ((p: T) => T)) => void, boolean] {
+  const full = storageKey(key);
   const [v, setV] = useState<T>(() => {
+    if (override !== undefined) return override;
     try {
-      const s = localStorage.getItem(key);
+      let s = localStorage.getItem(full);
+      if (s === null && full !== key && (s = localStorage.getItem(key)) !== null) {
+        // Saved before the prefix: move it.
+        localStorage.setItem(full, s);
+        localStorage.removeItem(key);
+      }
       if (s !== null) return JSON.parse(s) as T;
     } catch {
       /* storage unavailable */
     }
     return init;
   });
+  const [overridden, setOverridden] = useState(override !== undefined);
+  const dirty = useRef(false);
   useEffect(() => {
+    if (!dirty.current) return;
     try {
-      localStorage.setItem(key, JSON.stringify(v));
+      localStorage.setItem(full, JSON.stringify(v));
     } catch {
       /* ignore */
     }
-  }, [key, v]);
-  return [v, setV];
+  }, [full, v]);
+  const set = useCallback((n: T | ((p: T) => T)) => {
+    dirty.current = true;
+    setOverridden(false);
+    setV(n);
+  }, []);
+  return [v, set, overridden];
+}
+
+/** Where the shown schematic came from: a link, or (no url) a file from disk. */
+interface Source {
+  name: string;
+  url?: string;
 }
 
 const isTyping = (e: KeyboardEvent) => {
@@ -48,9 +80,19 @@ const isTyping = (e: KeyboardEvent) => {
 };
 
 export default function App() {
-  const [dark, setDark] = useStored('theme-dark', window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false);
+  const [dark, setDark, darkFromLink] = useStored(
+    'theme-dark',
+    window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false,
+    initial.dark,
+  );
   const [schematic, setSchematic] = useState<Schematic | null>(null);
-  const [source, setSource] = useState<{ name: string; url?: string } | null>(null);
+  const [source, setSource] = useState<Source | null>(null);
+  const [pose, setPose] = useState<CameraPose | null>(null);
+  const poseTimer = useRef(0);
+  const onPose = useCallback((p: CameraPose | null) => {
+    clearTimeout(poseTimer.current);
+    poseTimer.current = window.setTimeout(() => setPose(p), 300);
+  }, []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [navMode, setNavMode] = useState<NavMode>(initial.view ?? 'orbit');
@@ -64,7 +106,8 @@ export default function App() {
   const [labels, setLabels] = useStored('labels', true);
   const [showFps, setShowFps] = useStored('fps', false);
   const [hoverTips, setHoverTips] = useStored('hover-tips', false);
-  const [sidebar, setSidebar] = useStored('sidebar', true);
+  const [sidebar, setSidebar, sidebarFromLink] = useStored('sidebar', true, initial.list);
+  const embed = initial.embed ?? false;
   const [measureMode, setMeasureMode] = useState(false);
   const [exploreLocked, setExploreLocked] = useState(false);
   const [help, setHelp] = useState(false);
@@ -80,13 +123,15 @@ export default function App() {
     document.documentElement.classList.toggle('dark', dark);
   }, [dark]);
 
-  const open = useCallback(async (job: () => Promise<Schematic>, src: { name: string; url?: string }) => {
+  const open = useCallback(async (job: () => Promise<Schematic>, src: Source) => {
     setLoading(true);
     setError(null);
     try {
       const s = await job();
       setSchematic(s);
       setSource(src);
+      // The link's camera is applied by the viewport once the schematic is shown: keep it in the address meanwhile.
+      setPose(firstLoad.current ? (initial.camera ?? null) : null);
       setHidden(new Set());
       setHighlight(null);
       const fromLink = firstLoad.current ? initial.slice : undefined;
@@ -114,15 +159,32 @@ export default function App() {
   );
   const openFile = useCallback((f: File) => open(() => loadFromFile(f), { name: f.name }), [open]);
 
+  const pageTitle = `${APP_NAME} - ${schematic && source ? source.name : 'Главная'}`;
+  useEffect(() => {
+    document.title = pageTitle;
+  }, [pageTitle]);
+
   useEffect(() => {
     if (initial.url) void openUrl(initial.url);
   }, [openUrl]);
 
-  // Keep ?url= and the view in the address bar for remote files.
+  // Keep the schematic, the view and the layout in the address bar (see src/app/url.ts).
   useEffect(() => {
-    const link = shareLink(source?.url, navMode === 'plan' ? 'plan' : 'orbit', slice);
-    if (link) window.history.replaceState(null, '', link);
-  }, [source, navMode, slice]);
+    if (!source) return; // still loading what the link asks for: leave the address as it is
+    const link = viewLink(
+      {
+        url: source.url,
+        view: navMode,
+        slice,
+        camera: pose,
+        embed,
+        list: sidebarFromLink ? sidebar : undefined,
+        dark: darkFromLink ? dark : undefined,
+      },
+      appRoot(),
+    );
+    if (link !== window.location.href) window.history.replaceState(null, '', link);
+  }, [source, navMode, slice, pose, embed, sidebar, sidebarFromLink, dark, darkFromLink]);
 
   useEffect(() => {
     const onFs = () => setFullscreen(document.fullscreenElement !== null);
@@ -264,9 +326,9 @@ export default function App() {
           if (f) void openFile(f);
         }}
       >
-        {!fullscreen && (
+        {!fullscreen && !embed && (
           <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b bg-card px-3 py-2">
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               {schematic && (
                 <Tip content={sidebar ? 'Скрыть список блоков (M)' : 'Показать список блоков (M)'}>
                   <Button variant="ghost" size="icon" onClick={() => setSidebar((v) => !v)} aria-label="Список блоков">
@@ -275,15 +337,13 @@ export default function App() {
                 </Tip>
               )}
               <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="size-6" />
-              <h1 className="text-base font-semibold tracking-tight">Схематики MCGL</h1>
+              <h1
+                className="truncate text-base font-semibold tracking-tight"
+                title={schematic && source ? (source.url ?? source.name) : undefined}
+              >
+                {pageTitle}
+              </h1>
             </div>
-            {schematic && source && (
-              <div className="flex min-w-0 items-baseline gap-2 text-sm">
-                <span className="truncate font-medium" title={source.url ?? source.name}>
-                  {source.name}
-                </span>
-              </div>
-            )}
             <div className="ml-auto flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setOpenDialog(true)} disabled={loading}>
                 <FolderOpen /> Открыть
@@ -367,6 +427,8 @@ export default function App() {
               onExploreLock={setExploreLocked}
               onError={onError}
               blockActions={blockActions}
+              initialPose={initial.camera}
+              onPose={onPose}
             />
             {schematic && (
               <>
@@ -457,6 +519,7 @@ export default function App() {
           onUrl={(u) => void openUrl(u)}
           onFile={(f) => void openFile(f)}
           onExample={() => void openUrl(EXAMPLE)}
+          onError={onError}
           loading={loading}
         />
       </div>

@@ -32,7 +32,8 @@ browser (Playwright): `?url=./examples/all-blocks.schematic`, the dev build expo
   meta, render type, bounds, connections. Write down where a behaviour came from in a comment.
 - **Atlas** `public/assets/terrain.png` is the client's `terrain.png` from `original.jar`, copied as is. Slot →
   pixel: `src/render/atlas.ts` (two 16×32 halves). Animated slots are generated at runtime
-  (`src/render/texfx.ts`, ported non-HD texture effects); never use the client's `custom_*` HD files.
+  (`src/render/texfx.ts`, ported non-HD texture effects). `public/assets/terrain-hd.png` (2048×2048) is the built-in
+  HD option of the texture pack menu (`BUILTIN_HD_PACK` in `src/lib/texturepacks.ts`).
 - **Names** shown to the user come from the game's item info (`src/blocks/iteminfo.json`, generated from the
   client's `ahiteminf.ini`, format `id|meta|name|description`).
 - **shadcn components are generated, never hand-written or edited.** Add them with

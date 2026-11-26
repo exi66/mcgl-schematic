@@ -39,7 +39,7 @@ interface Props {
   navMode: NavMode;
   measureMode: boolean;
   showFps: boolean;
-  /** Custom terrain.png URL (null = default built-in atlas). */
+  /** Custom terrain.png URL (null = built-in atlas, undefined = the saved texture pack is still being found). */
   terrainUrl?: string | null;
   /** Tooltip with the block under the cursor (and under the crosshair in explore). */
   hoverTips: boolean;
@@ -80,7 +80,7 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
     navMode,
     measureMode,
     showFps,
-    terrainUrl = null,
+    terrainUrl,
     hoverTips,
     onMeasureDone,
     onExploreLock,
@@ -171,6 +171,7 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
   }, [display]);
 
   useEffect(() => {
+    if (terrainUrl === undefined) return;
     viewerRef.current?.setTerrainUrl(terrainUrl).catch((e: Error) => onError(e.message));
   }, [terrainUrl, onError]);
 

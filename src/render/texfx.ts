@@ -327,7 +327,8 @@ export interface AtlasPixels {
   width: number;
 }
 
-function readTile(img: AtlasPixels, slot: number): Uint8ClampedArray {
+/** One 16×16 tile of the atlas (nearest-neighbour from an HD atlas: width / 512 source pixels per tile pixel). */
+export function readTile(img: AtlasPixels, slot: number): Uint8ClampedArray {
   const out = new Uint8ClampedArray(N * N * 4);
   const scale = img.width / 512;
   const x0 = tileX(slot) * scale;
@@ -402,6 +403,11 @@ export class AtlasAnimator {
     for (const fx of this.effects) fx.tick();
   }
 
+  /**
+   * Animated tiles are the client's 16×16 procedural effects. In an HD atlas (scale > 1) the pack's own tile is
+   * sampled down to 16×16 as the effect's base and every frame is scaled back up,, so animated blocks are not
+   * sharper than 16 px.
+   */
   private write(): void {
     const sScale = this.scale;
     if (sScale !== 1) this.ctx.imageSmoothingEnabled = false;
@@ -419,7 +425,12 @@ export class AtlasAnimator {
         for (let dy = 0; dy < fx.size; dy++)
           for (let dx = 0; dx < fx.size; dx++) {
             const s = fx.slot + dx + dy * 16;
-            this.ctx.drawImage(this.tileCanvas!, tileX(s) * sScale, tileY(s) * sScale, tilePx, tilePx);
+            const x = tileX(s) * sScale;
+            const y = tileY(s) * sScale;
+            // putImageData replaces pixels, drawImage blends: clear first, or translucent tiles (water, portal)
+            // would pile up opacity frame after frame.
+            this.ctx.clearRect(x, y, tilePx, tilePx);
+            this.ctx.drawImage(this.tileCanvas!, x, y, tilePx, tilePx);
           }
       }
     }

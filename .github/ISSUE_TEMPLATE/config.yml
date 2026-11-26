@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Открыть просмотрщик
-    url: https://exi66.github.io/mcgl-shcematica-viewer/
-    about: Сам просмотрщик схематик.
+  - name: Открыть сайт
+    url: https://exi66.github.io/mcgl-schematic/
+    about: Схематики MCGL в браузере.

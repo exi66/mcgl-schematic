@@ -1,7 +1,9 @@
 import { Check, Copy, Download, Share } from 'lucide-react';
 import { useState } from 'react';
 import { materialsBbcode, materialsMarkdown, type MaterialList } from '../app/export';
-import { Popover, PopoverContent, PopoverTrigger, Tip } from './kit';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tip } from './Tip';
 
 type Format = 'md' | 'bbcode';
 
@@ -38,16 +40,11 @@ export function ExportMenu({ list }: { list: MaterialList }) {
   return (
     <Popover>
       <Tip content="Экспорт списка материалов">
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground data-[state=open]:text-foreground [&_svg]:size-3.5"
-          >
-            <Share /> Экспорт
-          </button>
+        <PopoverTrigger render={<Button variant="ghost" size="xs" className="-my-1 text-muted-foreground" />}>
+          <Share /> Экспорт
         </PopoverTrigger>
       </Tip>
-      <PopoverContent side="bottom" align="start" className="w-64 p-2">
+      <PopoverContent side="bottom" align="start" className="w-64 gap-0 p-2">
         <div className="px-2 pt-1.5 pb-2 text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
           Список материалов
         </div>
@@ -55,24 +52,26 @@ export function ExportMenu({ list }: { list: MaterialList }) {
           <div key={f.id} className="flex items-center gap-1 p-1">
             <span className="flex-1 pl-1 text-[12.5px]">{f.label}</span>
             <Tip content="Скопировать">
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="icon-xs"
                 aria-label={`Скопировать ${f.label}`}
-                className="p-1.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground [&_svg]:size-3.5"
+                className="text-muted-foreground"
                 onClick={() => void copy(f)}
               >
                 {copied === f.id ? <Check /> : <Copy />}
-              </button>
+              </Button>
             </Tip>
             <Tip content="Скачать файлом">
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="icon-xs"
                 aria-label={`Скачать ${f.label}`}
-                className="p-1.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground [&_svg]:size-3.5"
+                className="text-muted-foreground"
                 onClick={() => download(`${base}-материалы.${f.ext}`, f.make(list))}
               >
                 <Download />
-              </button>
+              </Button>
             </Tip>
           </div>
         ))}

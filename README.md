@@ -1,13 +1,16 @@
-# Просмотр схематик MCGL
+# Схематики MCGL
 
-Просмотрщик схематик для [Minecraft Galaxy](https://minecraft-galaxy.ru/) прямо в браузере.
+Схематики [Minecraft Galaxy](https://minecraft-galaxy.ru/) прямо в браузере: 3D-просмотр, срезы, линейка и список
+материалов.
+
+**Открыть:** https://exi66.github.io/mcgl-schematic/
 
 ## Как открыть схематику
 
 - Кнопка **«Открыть»** вверху: вставьте ссылку на файл или выберите файл с диска.
 - Или просто **перетащите файл** `.schematic` в окно.
 - Или передайте ссылку в адресе страницы:
-  `https://exi66.github.io/mcgl-shcematica-viewer/?url=<ссылка на .schematic>`
+  `https://exi66.github.io/mcgl-schematic/?url=<ссылка на .schematic>`
 
 Поддерживается формат MCEdit `.schematic`. Файл по ссылке скачивается вашим
 браузером, поэтому сайт с файлом должен разрешать это (CORS): подходят raw.githubusercontent.com, gist,

@@ -1,5 +1,5 @@
 {
-  "name": "mcgl-shcematica-viewer",
+  "name": "mcgl-schematic",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -18,9 +18,11 @@
     "prebuild": "pnpm build:icons"
   },
   "dependencies": {
+    "@base-ui/react": "^1.9.0",
     "@fontsource-variable/geist-mono": "^5.3.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cn": "^0.5.2",
     "lucide-react": "^1.80.0",
     "radix-ui": "^1.8.1",
     "react": "19",

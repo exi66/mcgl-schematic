@@ -1,7 +1,6 @@
 import {
   Activity,
   Box,
-  MousePointer2,
   ChevronUp,
   Compass,
   Footprints,
@@ -11,6 +10,7 @@ import {
   Map,
   Maximize,
   Minimize,
+  MousePointer2,
   Palette,
   Rotate3d,
   RotateCcw,
@@ -19,55 +19,34 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { HexColorPicker } from 'react-colorful';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Kbd } from '@/components/ui/kbd';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
+import { Toggle } from '@/components/ui/toggle';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import type { DisplayState, NavMode } from '../render/viewer';
-import { cn, Kbd, Popover, PopoverContent, PopoverTrigger, ScrollArea, Tip } from './kit';
+import { Tip } from './Tip';
 
 /** Background presets (as in shulkr). */
 export const BACKGROUND_PRESETS = ['#000000', '#f4f3ee', '#16233a', '#123a35', '#3a1f2e', '#00b140'];
 export const themeBackground = (dark: boolean) => (dark ? '#16181d' : '#dfe3ea');
 
-function ToolButton({
-  active,
-  onClick,
-  label,
-  hotkey,
-  children,
-  wide,
-}: {
-  active?: boolean;
-  onClick?: () => void;
-  label: string;
-  hotkey?: string;
-  children: ReactNode;
-  wide?: boolean;
-}) {
-  return (
-    <Tip
-      content={
-        <span>
-          {label}
-          {hotkey && <span className="ml-1.5 opacity-60">{hotkey}</span>}
-        </span>
-      }
-    >
-      <button
-        type="button"
-        aria-label={label}
-        aria-pressed={active}
-        onClick={onClick}
-        className={cn(
-          'inline-flex h-9 items-center justify-center gap-1.5 text-sm font-medium transition-colors [&_svg]:size-4',
-          wide ? 'px-3' : 'w-9',
-          active ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted',
-        )}
-      >
-        {children}
-      </button>
-    </Tip>
-  );
-}
+/** Tooltip text with the hotkey. */
+const tipText = (label: string, hotkey?: string) => (
+  <span>
+    {label}
+    {hotkey && <span className="ml-1.5 opacity-60">{hotkey}</span>}
+  </span>
+);
 
 const Sep = () => <span className="mx-1 h-6 w-px bg-border" />;
+
+/** Compact toolbar sizing on top of the shadcn defaults. */
+const toolClass =
+  'h-9 min-w-9 px-2.5 aria-pressed:bg-primary aria-pressed:text-primary-foreground [&_svg:not([class*=size-])]:size-4';
 
 function MenuTitle({ children }: { children: ReactNode }) {
   return (
@@ -77,28 +56,31 @@ function MenuTitle({ children }: { children: ReactNode }) {
   );
 }
 
-/** Menu row: icon, label, then fixed columns for the hotkey and the switch (aligned across rows). */
-function MenuRow({
+const rowClass =
+  'grid w-full cursor-pointer grid-cols-[14px_1fr_28px_34px] items-center gap-2.5 p-2 text-left text-[12.5px] transition-colors hover:bg-muted/60';
+
+function RowContent({
   icon,
   label,
   hotkey,
   control,
-  ...rest
-}: { icon: ReactNode; label: string; hotkey?: string; control?: ReactNode } & React.ComponentProps<'button'>) {
+}: {
+  icon: ReactNode;
+  label: string;
+  hotkey?: string;
+  control?: ReactNode;
+}) {
   return (
-    <button
-      type="button"
-      className="grid w-full grid-cols-[14px_1fr_28px_30px] items-center gap-2.5 p-2 text-left text-[12.5px] transition-colors hover:bg-muted/60"
-      {...rest}
-    >
+    <>
       <span className="inline-flex text-muted-foreground [&_svg]:size-3.5">{icon}</span>
       <span className="whitespace-nowrap">{label}</span>
       <span className="flex justify-end">{hotkey && <Kbd>{hotkey}</Kbd>}</span>
       <span className="flex justify-end">{control}</span>
-    </button>
+    </>
   );
 }
 
+/** Menu row with a switch: icon, label, then fixed columns for the hotkey and the switch (aligned across rows). */
 function MenuSwitch({
   icon,
   label,
@@ -113,27 +95,14 @@ function MenuSwitch({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <MenuRow
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      icon={icon}
-      label={label}
-      hotkey={hotkey}
-      control={
-        <span
-          aria-hidden
-          className={cn('relative h-[17px] w-[30px] shrink-0 transition-colors', checked ? 'bg-primary' : 'bg-input')}
-        >
-          <span
-            className={cn(
-              'absolute top-0.5 size-[13px] bg-card transition-[left]',
-              checked ? 'left-[15px]' : 'left-0.5',
-            )}
-          />
-        </span>
-      }
-    />
+    <label className={rowClass}>
+      <RowContent
+        icon={icon}
+        label={label}
+        hotkey={hotkey}
+        control={<Switch checked={checked} onCheckedChange={(v) => onChange(v)} />}
+      />
+    </label>
   );
 }
 
@@ -158,7 +127,9 @@ function DisplayMenu({
   return (
     <>
       <MenuTitle>Отображение</MenuTitle>
-      <MenuRow icon={<RotateCcw />} label="Сбросить вид" hotkey="R" onClick={onReset} />
+      <button type="button" className={rowClass} onClick={onReset}>
+        <RowContent icon={<RotateCcw />} label="Сбросить вид" hotkey="R" />
+      </button>
       <MenuSwitch
         icon={<Grid3x3 />}
         label="Сетка на полу"
@@ -230,6 +201,12 @@ function DisplayMenu({
   );
 }
 
+const NAV_MODES: { value: NavMode; label: string; short: string; hotkey: string; icon: ReactNode }[] = [
+  { value: 'orbit', label: 'Вращение', short: 'Вращение', hotkey: '1', icon: <Rotate3d /> },
+  { value: 'plan', label: 'План (вид сверху)', short: 'План', hotkey: '2', icon: <Map /> },
+  { value: 'explore', label: 'Обзор: ходьба и полёт', short: 'Обзор', hotkey: '3', icon: <Footprints /> },
+];
+
 export function Toolbar({
   navMode,
   onNavMode,
@@ -267,55 +244,30 @@ export function Toolbar({
 }) {
   return (
     <div className="pointer-events-auto flex items-center border bg-card/95 p-1 shadow-lg backdrop-blur">
-      <ToolButton wide active={navMode === 'orbit'} onClick={() => onNavMode('orbit')} label="Вращение" hotkey="1">
-        <Rotate3d /> <span className="hidden sm:inline">Вращение</span>
-      </ToolButton>
-      <ToolButton
-        wide
-        active={navMode === 'plan'}
-        onClick={() => onNavMode('plan')}
-        label="План (вид сверху)"
-        hotkey="2"
-      >
-        <Map /> <span className="hidden sm:inline">План</span>
-      </ToolButton>
-      <ToolButton
-        wide
-        active={navMode === 'explore'}
-        onClick={() => onNavMode('explore')}
-        label="Обзор: ходьба и полёт"
-        hotkey="3"
-      >
-        <Footprints /> <span className="hidden sm:inline">Обзор</span>
-      </ToolButton>
+      <ToolbarModes navMode={navMode} onNavMode={onNavMode} />
       <Sep />
-      <ToolButton active={slice} onClick={onSlice} label="Срез" hotkey="L">
-        <Layers />
-      </ToolButton>
-      <ToolButton
-        active={measure}
-        onClick={onMeasure}
-        label="Линейка: протяните по блокам (или Shift + перетаскивание)"
-        hotkey="⇧ drag"
-      >
-        <Ruler />
-      </ToolButton>
+      <Tip content={tipText('Срез', 'L')}>
+        <Toggle aria-label="Срез" pressed={slice} onPressedChange={() => onSlice()} className={toolClass}>
+          <Layers />
+        </Toggle>
+      </Tip>
+      <Tip content={tipText('Линейка: протяните по блокам (или Shift + перетаскивание)', '⇧ drag')}>
+        <Toggle aria-label="Линейка" pressed={measure} onPressedChange={() => onMeasure()} className={toolClass}>
+          <Ruler />
+        </Toggle>
+      </Tip>
       <Popover>
         <Tip content="Отображение">
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              aria-label="Отображение"
-              className="inline-flex h-9 items-center gap-0.5 px-2 hover:bg-muted data-[state=open]:bg-muted [&_svg]:size-4"
-            >
-              <Palette />
-              <ChevronUp className="!size-3 opacity-60" />
-            </button>
+          <PopoverTrigger
+            render={<Button variant="ghost" aria-label="Отображение" className={cn(toolClass, 'gap-0.5 px-2')} />}
+          >
+            <Palette />
+            <ChevronUp className="size-3! opacity-60" />
           </PopoverTrigger>
         </Tip>
-        <PopoverContent side="top" collisionPadding={8} className="w-max p-0">
+        <PopoverContent side="top" sideOffset={8} className="w-max gap-0 p-0">
           {/* Scrolls only when the menu does not fit on the screen. */}
-          <ScrollArea viewportClassName="max-h-[calc(var(--radix-popover-content-available-height)-2px)] overscroll-contain">
+          <ScrollArea className="max-h-[calc(var(--available-height)-2px)] [&>[data-slot=scroll-area-viewport]]:max-h-[inherit]">
             <div className="p-2">
               <DisplayMenu
                 display={display}
@@ -331,16 +283,41 @@ export function Toolbar({
         </PopoverContent>
       </Popover>
       <Sep />
-      <ToolButton onClick={onHelp} label="Горячие клавиши" hotkey="?">
-        <Keyboard />
-      </ToolButton>
-      <ToolButton
-        onClick={onFullscreen}
-        label={fullscreen ? 'Выйти из полноэкранного режима' : 'Полный экран'}
-        hotkey="F"
-      >
-        {fullscreen ? <Minimize /> : <Maximize />}
-      </ToolButton>
+      <Tip content={tipText('Горячие клавиши', '?')}>
+        <Button variant="ghost" aria-label="Горячие клавиши" onClick={onHelp} className={toolClass}>
+          <Keyboard />
+        </Button>
+      </Tip>
+      <Tip content={tipText(fullscreen ? 'Выйти из полноэкранного режима' : 'Полный экран', 'F')}>
+        <Button variant="ghost" aria-label="Полный экран" onClick={onFullscreen} className={toolClass}>
+          {fullscreen ? <Minimize /> : <Maximize />}
+        </Button>
+      </Tip>
     </div>
+  );
+}
+
+/** Orbit / plan / explore: one of three (shadcn ToggleGroup). */
+function ToolbarModes({ navMode, onNavMode }: { navMode: NavMode; onNavMode: (m: NavMode) => void }) {
+  return (
+    <ToggleGroup
+      value={[navMode]}
+      onValueChange={(v) => {
+        const mode = v[0] as NavMode | undefined;
+        if (mode) onNavMode(mode);
+      }}
+    >
+      {NAV_MODES.map((m) => (
+        <Tip key={m.value} content={tipText(m.label, m.hotkey)}>
+          <ToggleGroupItem
+            value={m.value}
+            aria-label={m.label}
+            className={cn(toolClass, 'aria-pressed:bg-primary aria-pressed:text-primary-foreground')}
+          >
+            {m.icon} <span className="hidden sm:inline">{m.short}</span>
+          </ToggleGroupItem>
+        </Tip>
+      ))}
+    </ToggleGroup>
   );
 }

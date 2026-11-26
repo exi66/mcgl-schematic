@@ -1,5 +1,5 @@
 // Runs before dev/build: renders icon frames of the animated atlas tiles (plutonium, titanium, energy field,
-// bridge, portal/barrier, fluids) with the same effects the viewer animates, and writes them in one row to
+// bridge, portal/barrier, fluids) with the same effects the site animates (last frame), and writes them in one row to
 // public/assets/fx-icons.png (16 px per tile, order = FX_SLOTS). Deterministic: Math.random is seeded.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { PNG } from 'pngjs';

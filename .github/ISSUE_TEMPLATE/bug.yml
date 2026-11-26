@@ -17,7 +17,7 @@ body:
   - type: input
     id: link
     attributes:
-      label: Ссылка на схематику или страницу просмотрщика
+      label: Ссылка на схематику или страницу сайта
       description: Если можно — ссылка, по которой ошибка повторяется (или приложите файл .schematic ниже).
   - type: textarea
     id: screenshots

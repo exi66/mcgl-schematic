@@ -329,10 +329,21 @@ export interface AtlasPixels {
 
 function readTile(img: AtlasPixels, slot: number): Uint8ClampedArray {
   const out = new Uint8ClampedArray(N * N * 4);
-  const x0 = tileX(slot),
-    y0 = tileY(slot);
-  for (let y = 0; y < 16; y++)
-    out.set(img.data.subarray(((y0 + y) * img.width + x0) * 4, ((y0 + y) * img.width + x0 + 16) * 4), y * 64);
+  const scale = img.width / 512;
+  const x0 = tileX(slot) * scale;
+  const y0 = tileY(slot) * scale;
+  for (let y = 0; y < N; y++) {
+    const sy = Math.floor(y0 + y * scale);
+    for (let x = 0; x < N; x++) {
+      const sx = Math.floor(x0 + x * scale);
+      const src = (sy * img.width + sx) * 4;
+      const dst = (y * N + x) * 4;
+      out[dst] = img.data[src];
+      out[dst + 1] = img.data[src + 1];
+      out[dst + 2] = img.data[src + 2];
+      out[dst + 3] = img.data[src + 3];
+    }
+  }
   return out;
 }
 
@@ -369,8 +380,18 @@ export class AtlasAnimator {
   private last = 0;
   private acc = 0;
   private readonly tileImg = new ImageData(16, 16);
+  private readonly scale: number;
+  private readonly tileCanvas?: HTMLCanvasElement;
+  private readonly tileCtx?: CanvasRenderingContext2D;
 
   constructor(private readonly ctx: CanvasRenderingContext2D) {
+    this.scale = Math.max(1, ctx.canvas.width / 512);
+    if (this.scale !== 1) {
+      this.tileCanvas = document.createElement('canvas');
+      this.tileCanvas.width = 16;
+      this.tileCanvas.height = 16;
+      this.tileCtx = this.tileCanvas.getContext('2d')!;
+    }
     this.effects = createEffects(ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height));
     // Warm up so the first frame is not empty.
     for (let i = 0; i < 40; i++) this.tickAll();
@@ -382,13 +403,25 @@ export class AtlasAnimator {
   }
 
   private write(): void {
+    const sScale = this.scale;
+    if (sScale !== 1) this.ctx.imageSmoothingEnabled = false;
     for (const fx of this.effects) {
       this.tileImg.data.set(fx.pixels);
-      for (let dy = 0; dy < fx.size; dy++)
-        for (let dx = 0; dx < fx.size; dx++) {
-          const s = fx.slot + dx + dy * 16;
-          this.ctx.putImageData(this.tileImg, tileX(s), tileY(s));
-        }
+      if (sScale === 1) {
+        for (let dy = 0; dy < fx.size; dy++)
+          for (let dx = 0; dx < fx.size; dx++) {
+            const s = fx.slot + dx + dy * 16;
+            this.ctx.putImageData(this.tileImg, tileX(s), tileY(s));
+          }
+      } else {
+        this.tileCtx!.putImageData(this.tileImg, 0, 0);
+        const tilePx = 16 * sScale;
+        for (let dy = 0; dy < fx.size; dy++)
+          for (let dx = 0; dx < fx.size; dx++) {
+            const s = fx.slot + dx + dy * 16;
+            this.ctx.drawImage(this.tileCanvas!, tileX(s) * sScale, tileY(s) * sScale, tilePx, tilePx);
+          }
+      }
     }
   }
 

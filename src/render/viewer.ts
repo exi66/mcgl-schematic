@@ -529,11 +529,16 @@ export class Viewer {
 
   // ── Assets and meshes ───────────────────────────────────────────────────────
 
+  private terrainUrl: string | null = null;
+  private loadedTerrainUrl: string | null = null;
+
   private async loadAssets(): Promise<void> {
     const base = import.meta.env.BASE_URL;
     // Canvas labels and stub textures use the UI font: wait for it.
     await document.fonts?.load(`bold 48px ${CANVAS_FONT}`).catch(() => undefined);
-    const terrain = await this.loadAtlas(`${base}assets/terrain.png`);
+    const target = this.terrainUrl ?? `${base}assets/terrain.png`;
+    this.loadedTerrainUrl = target;
+    const terrain = await this.loadAtlas(target);
     const stub = pixelTexture(new THREE.CanvasTexture(makeStubAtlas()));
     const basic = (p: THREE.MeshBasicMaterialParameters) => new THREE.MeshBasicMaterial({ vertexColors: true, ...p });
     this.materials = {
@@ -585,6 +590,33 @@ export class Viewer {
         }
       }),
     );
+  }
+
+  /** Switches the terrain atlas at runtime (null = built-in terrain.png). */
+  async setTerrainUrl(url: string | null): Promise<void> {
+    this.terrainUrl = url;
+    await this.ready;
+    if (this.disposed) return;
+    const target = url ?? `${import.meta.env.BASE_URL}assets/terrain.png`;
+    if (this.loadedTerrainUrl === target) return;
+    const prev = this.atlasTexture;
+    const tex = await this.loadAtlas(target);
+    if (this.disposed) {
+      tex.dispose();
+      return;
+    }
+    this.loadedTerrainUrl = target;
+    for (const mat of [
+      this.materials!.solid,
+      this.materials!.cutout,
+      this.materials!.translucent,
+      this.materials!.ghost,
+    ]) {
+      (mat as THREE.MeshBasicMaterial).map = tex;
+      mat.needsUpdate = true;
+    }
+    prev?.dispose();
+    this.requestRender();
   }
 
   /** Loads the atlas into a canvas so animated tiles can be redrawn every tick. */
@@ -662,17 +694,25 @@ export class Viewer {
     this.requestRender();
   }
 
-  private computeVisibility(): Uint8Array {
+  private computeVisibility(): { vis: Uint8Array; hasGhost: boolean } {
     const s = this.schematic!;
     const st = this.state!;
     const vis = new Uint8Array(s.blocks.length);
+    const sl = st.slice;
+    const needKey = st.hidden.size > 0 || st.highlight !== null;
+    if (!sl.enabled && !needKey) {
+      for (let i = 0; i < s.blocks.length; i++) {
+        if (s.blocks[i] !== 0) vis[i] = 1;
+      }
+      return { vis, hasGhost: false };
+    }
+    let hasGhost = false;
     const W = s.width,
       L = s.length;
-    const sl = st.slice;
     for (let i = 0; i < s.blocks.length; i++) {
       const id = s.blocks[i];
       if (id === 0) continue;
-      const key = variantKey(id, s.data[i]);
+      const key = needKey ? variantKey(id, s.data[i]) : '';
       if (st.hidden.has(key)) continue;
       let v: Visibility = 1;
       if (sl.enabled) {
@@ -687,9 +727,10 @@ export class Viewer {
         } else if (c > sl.value) continue;
       }
       if (st.highlight !== null && key !== st.highlight) v = 2;
+      if (v === 2) hasGhost = true;
       vis[i] = v;
     }
-    return vis;
+    return { vis, hasGhost };
   }
 
   private voxels(want: Visibility): Voxels {
@@ -733,10 +774,11 @@ export class Viewer {
   private rebuild(): void {
     const s = this.schematic!;
     const m = this.materials!;
-    this.vis = this.computeVisibility();
+    const { vis, hasGhost } = this.computeVisibility();
+    this.vis = vis;
     this.clearContent();
     const normal = this.voxels(1);
-    const ghost = this.voxels(2);
+    const ghost = hasGhost ? this.voxels(2) : null;
     const instances: { normal: ModelInstance[]; ghost: ModelInstance[] } = { normal: [], ghost: [] };
     const add = (a: GeoArrays, mat: THREE.Material, order: number) => {
       if (a.indices.length === 0) return;
@@ -761,13 +803,15 @@ export class Viewer {
         add(a.cutout, m.cutout, 1);
         add(a.translucent, m.translucent, 3);
         instances.normal.push(...a.models);
-        const b = meshRegion(ghost, region);
-        for (const part of [b.solid, b.cutout, b.translucent]) add(part, m.ghost, 4);
-        add(b.unknown, m.ghostUnknown, 4);
-        instances.ghost.push(...b.models);
+        if (ghost) {
+          const b = meshRegion(ghost, region);
+          for (const part of [b.solid, b.cutout, b.translucent]) add(part, m.ghost, 4);
+          add(b.unknown, m.ghostUnknown, 4);
+          instances.ghost.push(...b.models);
+        }
       }
     this.addModels(instances.normal, false);
-    this.addModels(instances.ghost, true);
+    if (instances.ghost.length > 0) this.addModels(instances.ghost, true);
     this.requestRender();
   }
 

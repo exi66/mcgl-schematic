@@ -39,6 +39,8 @@ interface Props {
   navMode: NavMode;
   measureMode: boolean;
   showFps: boolean;
+  /** Custom terrain.png URL (null = default built-in atlas). */
+  terrainUrl?: string | null;
   /** Tooltip with the block under the cursor (and under the crosshair in explore). */
   hoverTips: boolean;
   onMeasureDone: () => void;
@@ -78,6 +80,7 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
     navMode,
     measureMode,
     showFps,
+    terrainUrl = null,
     hoverTips,
     onMeasureDone,
     onExploreLock,
@@ -166,6 +169,10 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
   useEffect(() => {
     viewerRef.current?.setDisplay(display);
   }, [display]);
+
+  useEffect(() => {
+    viewerRef.current?.setTerrainUrl(terrainUrl).catch((e: Error) => onError(e.message));
+  }, [terrainUrl, onError]);
 
   useEffect(() => {
     const v = viewerRef.current;

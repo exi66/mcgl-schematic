@@ -6,6 +6,7 @@ import { appRoot, readUrlState, viewLink } from './app/url';
 import type { CameraPose, DisplayState, NavMode, SliceState, ViewState } from './render/viewer';
 import type { Schematic } from './schematic/schematic';
 import { BlockList, blockStats } from './components/BlockList';
+import { TerrainUrlContext } from './components/BlockIcon';
 import { HotkeysDialog } from './components/HotkeysDialog';
 import { SlicePanel } from './components/SlicePanel';
 import { Toolbar } from './components/Toolbar';
@@ -22,6 +23,13 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { useDarkTheme } from '@/hooks/use-dark-theme';
 import { useStored } from '@/hooks/use-stored';
 import { APP_NAME } from '@/lib/app';
+import {
+  deleteTexturePack,
+  getTexturePackUrl,
+  listTexturePacks,
+  saveTexturePack,
+  type TexturePackMeta,
+} from '@/lib/texturepacks';
 import { z } from 'zod';
 import { CubeLogo } from './components/CubeLogo';
 
@@ -69,6 +77,11 @@ export default function App() {
   const [labels, setLabels] = useStored('labels', true, { schema: z.boolean() });
   const [showFps, setShowFps] = useStored('fps', false, { schema: z.boolean() });
   const [hoverTips, setHoverTips] = useStored('hover-tips', false, { schema: z.boolean() });
+  const [activePackId, setActivePackId] = useStored<string | null>('texturepack', null, {
+    schema: z.string().nullable(),
+  });
+  const [texturePacks, setTexturePacks] = useState<TexturePackMeta[]>([]);
+  const [terrainUrl, setTerrainUrl] = useState<string | null>(null);
   const [sidebar, setSidebar, sidebarFromLink] = useStored('sidebar', true, {
     schema: z.boolean(),
     override: initial.list,
@@ -88,6 +101,56 @@ export default function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
   }, [dark]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void listTexturePacks().then((list) => {
+      if (!cancelled) setTexturePacks(list);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = activePackId ? getTexturePackUrl(activePackId) : Promise.resolve(null);
+    void load.then((url) => {
+      if (cancelled) return;
+      if (activePackId && !url) {
+        setActivePackId(null);
+        setTerrainUrl(null);
+      } else {
+        setTerrainUrl(url);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [activePackId, setActivePackId]);
+
+  const handleUploadPack = useCallback(
+    async (file: File) => {
+      setError(null);
+      try {
+        const meta = await saveTexturePack(file);
+        setTexturePacks((prev) => [...prev, meta]);
+        setActivePackId(meta.id);
+      } catch (e) {
+        setError((e as Error).message);
+      }
+    },
+    [setActivePackId],
+  );
+
+  const handleDeletePack = useCallback(
+    async (id: string) => {
+      await deleteTexturePack(id);
+      setTexturePacks((prev) => prev.filter((p) => p.id !== id));
+      if (activePackId === id) setActivePackId(null);
+    },
+    [activePackId, setActivePackId],
+  );
 
   const open = useCallback(async (job: () => Promise<Schematic>, src: Source) => {
     setLoading(true);
@@ -275,231 +338,239 @@ export default function App() {
   const fmt = new Intl.NumberFormat(i18n.language);
 
   return (
-    <TooltipProvider delay={300}>
-      <div
-        className="flex h-full flex-col"
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={(e) => {
-          if (e.currentTarget === e.target) setDragging(false);
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragging(false);
-          const f = e.dataTransfer.files[0];
-          if (f) void openFile(f);
-        }}
-      >
-        {!fullscreen && !embed && (
-          <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b bg-card px-3 py-2">
-            <div className="flex min-w-0 items-center gap-2">
-              {schematic && (
-                <Tip content={`${sidebar ? t('app.hideList') : t('app.showList')} (M)`}>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setSidebar((v) => !v)}
-                    aria-label={t('app.blockList')}
-                  >
-                    {sidebar ? <PanelLeftClose /> : <PanelLeftOpen />}
-                  </Button>
-                </Tip>
-              )}
-              <CubeLogo />
-              <h1
-                className="truncate text-base font-semibold tracking-tight"
-                title={schematic && source ? (source.url ?? source.name) : undefined}
-              >
-                {pageTitle}
-              </h1>
-            </div>
-            <div className="ml-auto flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setOpenDialog(true)} disabled={loading}>
-                <FolderOpen /> {t('app.open')}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setDark((d) => !d)}
-                title={dark ? t('theme.light') : t('theme.dark')}
-                aria-label={t('theme.toggle')}
-              >
-                {dark ? <Sun /> : <Moon />}
-              </Button>
-            </div>
-          </header>
-        )}
-
-        {error && (
-          <div
-            role="alert"
-            className="flex items-start gap-3 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-sm whitespace-pre-line text-destructive"
-          >
-            <span className="flex-1">{error}</span>
-            <Button variant="link" size="xs" className="h-auto p-0 text-destructive" onClick={() => setError(null)}>
-              {t('app.closeError')}
-            </Button>
-          </div>
-        )}
-
-        <div className="flex min-h-0 flex-1 flex-col-reverse md:flex-row">
-          {schematic && sidebar && !fullscreen && (
-            <aside className="flex max-h-[38vh] w-full shrink-0 flex-col overflow-hidden border-t bg-sidebar md:max-h-none md:w-80 md:border-t-0 md:border-r">
-              <div className="flex items-center gap-3 px-3 pt-3 pb-1">
-                <h2 className="flex-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                  {t('app.blocks')}
-                </h2>
-                <ExportMenu list={materials} />
-                {(hidden.size > 0 || highlight !== null) && (
-                  <Button
-                    variant="link"
-                    size="xs"
-                    className="-my-1 px-0"
-                    onClick={() => {
-                      setHidden(new Set());
-                      setHighlight(null);
-                    }}
-                  >
-                    {t('app.showAll')}
-                  </Button>
+    <TerrainUrlContext.Provider value={terrainUrl}>
+      <TooltipProvider delay={300}>
+        <div
+          className="flex h-full flex-col"
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={(e) => {
+            if (e.currentTarget === e.target) setDragging(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragging(false);
+            const f = e.dataTransfer.files[0];
+            if (f) void openFile(f);
+          }}
+        >
+          {!fullscreen && !embed && (
+            <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b bg-card px-3 py-2">
+              <div className="flex min-w-0 items-center gap-2">
+                {schematic && (
+                  <Tip content={`${sidebar ? t('app.hideList') : t('app.showList')} (M)`}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setSidebar((v) => !v)}
+                      aria-label={t('app.blockList')}
+                    >
+                      {sidebar ? <PanelLeftClose /> : <PanelLeftOpen />}
+                    </Button>
+                  </Tip>
                 )}
+                <CubeLogo />
+                <h1
+                  className="truncate text-base font-semibold tracking-tight"
+                  title={schematic && source ? (source.url ?? source.name) : undefined}
+                >
+                  {pageTitle}
+                </h1>
               </div>
-              <ScrollArea className="min-h-0 flex-1">
-                <div className="px-1.5 pb-3">
-                  <BlockList
-                    stats={stats}
-                    hidden={hidden}
-                    highlight={highlight}
-                    onToggleHidden={(id) =>
-                      setHidden((h) => {
-                        const n = new Set(h);
-                        if (n.has(id)) n.delete(id);
-                        else n.add(id);
-                        return n;
-                      })
-                    }
-                    onHighlight={setHighlight}
-                  />
-                </div>
-              </ScrollArea>
-            </aside>
+              <div className="ml-auto flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setOpenDialog(true)} disabled={loading}>
+                  <FolderOpen /> {t('app.open')}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setDark((d) => !d)}
+                  title={dark ? t('theme.light') : t('theme.dark')}
+                  aria-label={t('theme.toggle')}
+                >
+                  {dark ? <Sun /> : <Moon />}
+                </Button>
+              </div>
+            </header>
           )}
-          <main className="relative min-h-0 min-w-0 flex-1">
-            <Viewport
-              ref={viewportRef}
-              schematic={schematic}
-              view={view}
-              display={display}
-              navMode={navMode}
-              measureMode={measureMode}
-              showFps={showFps}
-              hoverTips={hoverTips}
-              onMeasureDone={() => setMeasureMode(false)}
-              onExploreLock={setExploreLocked}
-              onError={onError}
-              blockActions={blockActions}
-              initialPose={initial.camera}
-              onPose={onPose}
-            />
-            {schematic && (
-              <>
-                <div className="pointer-events-none absolute bottom-3 left-3 z-10 border bg-card/90 px-2.5 py-1.5 text-xs leading-5 tabular-nums shadow-sm backdrop-blur">
-                  <div>
-                    {schematic.width} × {schematic.height} × {schematic.length}
-                  </div>
-                  <div>{t('app.blockCount', { count: nonAir, formatted: fmt.format(nonAir) })}</div>
-                  {slice.enabled && (
-                    <div className="text-primary">
-                      {t(slice.isolate ? 'app.sliceLayer' : 'app.sliceUpTo', {
-                        axis: slice.axis.toUpperCase(),
-                        layer: slice.value + 1,
-                        count: size[slice.axis],
-                      })}
-                    </div>
+
+          {error && (
+            <div
+              role="alert"
+              className="flex items-start gap-3 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-sm whitespace-pre-line text-destructive"
+            >
+              <span className="flex-1">{error}</span>
+              <Button variant="link" size="xs" className="h-auto p-0 text-destructive" onClick={() => setError(null)}>
+                {t('app.closeError')}
+              </Button>
+            </div>
+          )}
+
+          <div className="flex min-h-0 flex-1 flex-col-reverse md:flex-row">
+            {schematic && sidebar && !fullscreen && (
+              <aside className="flex max-h-[38vh] w-full shrink-0 flex-col overflow-hidden border-t bg-sidebar md:max-h-none md:w-80 md:border-t-0 md:border-r">
+                <div className="flex items-center gap-3 px-3 pt-3 pb-1">
+                  <h2 className="flex-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    {t('app.blocks')}
+                  </h2>
+                  <ExportMenu list={materials} />
+                  {(hidden.size > 0 || highlight !== null) && (
+                    <Button
+                      variant="link"
+                      size="xs"
+                      className="-my-1 px-0"
+                      onClick={() => {
+                        setHidden(new Set());
+                        setHighlight(null);
+                      }}
+                    >
+                      {t('app.showAll')}
+                    </Button>
                   )}
                 </div>
-                {navMode !== 'explore' && slice.enabled && (
-                  <div className="absolute top-1/2 right-3 z-10 -translate-y-1/2">
-                    <SlicePanel
-                      slice={slice}
-                      size={size}
-                      onChange={setSlice}
-                      onClose={() => setSlice((s) => ({ ...s, enabled: false }))}
+                <ScrollArea className="min-h-0 flex-1">
+                  <div className="px-1.5 pb-3">
+                    <BlockList
+                      stats={stats}
+                      hidden={hidden}
+                      highlight={highlight}
+                      onToggleHidden={(id) =>
+                        setHidden((h) => {
+                          const n = new Set(h);
+                          if (n.has(id)) n.delete(id);
+                          else n.add(id);
+                          return n;
+                        })
+                      }
+                      onHighlight={setHighlight}
                     />
                   </div>
-                )}
-                <div
-                  className={cn(
-                    'pointer-events-none absolute bottom-3 left-1/2 z-20 -translate-x-1/2',
-                    exploreLocked && 'hidden',
+                </ScrollArea>
+              </aside>
+            )}
+            <main className="relative min-h-0 min-w-0 flex-1">
+              <Viewport
+                ref={viewportRef}
+                schematic={schematic}
+                view={view}
+                display={display}
+                navMode={navMode}
+                measureMode={measureMode}
+                showFps={showFps}
+                terrainUrl={terrainUrl}
+                hoverTips={hoverTips}
+                onMeasureDone={() => setMeasureMode(false)}
+                onExploreLock={setExploreLocked}
+                onError={onError}
+                blockActions={blockActions}
+                initialPose={initial.camera}
+                onPose={onPose}
+              />
+              {schematic && (
+                <>
+                  <div className="pointer-events-none absolute bottom-3 left-3 z-10 border bg-card/90 px-2.5 py-1.5 text-xs leading-5 tabular-nums shadow-sm backdrop-blur">
+                    <div>
+                      {schematic.width} × {schematic.height} × {schematic.length}
+                    </div>
+                    <div>{t('app.blockCount', { count: nonAir, formatted: fmt.format(nonAir) })}</div>
+                    {slice.enabled && (
+                      <div className="text-primary">
+                        {t(slice.isolate ? 'app.sliceLayer' : 'app.sliceUpTo', {
+                          axis: slice.axis.toUpperCase(),
+                          layer: slice.value + 1,
+                          count: size[slice.axis],
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  {navMode !== 'explore' && slice.enabled && (
+                    <div className="absolute top-1/2 right-3 z-10 -translate-y-1/2">
+                      <SlicePanel
+                        slice={slice}
+                        size={size}
+                        onChange={setSlice}
+                        onClose={() => setSlice((s) => ({ ...s, enabled: false }))}
+                      />
+                    </div>
                   )}
-                >
-                  <Toolbar
-                    navMode={navMode}
-                    onNavMode={setNavMode}
-                    slice={slice.enabled}
-                    onSlice={toggleSlice}
-                    measure={measureMode}
-                    onMeasure={() => setMeasureMode((m) => !m)}
-                    display={display}
-                    onDisplay={(d) => {
-                      setGrid(d.grid);
-                      setOrtho(d.ortho);
-                      setBackground(d.background);
-                      setAnimate(d.animate);
-                      setLabels(d.labels);
-                    }}
-                    onReset={() => viewportRef.current?.fit()}
-                    showFps={showFps}
-                    onShowFps={setShowFps}
-                    hoverTips={hoverTips}
-                    onHoverTips={setHoverTips}
-                    onHelp={() => setHelp(true)}
-                    fullscreen={fullscreen}
-                    onFullscreen={toggleFullscreen}
+                  <div
+                    className={cn(
+                      'pointer-events-none absolute bottom-3 left-1/2 z-20 -translate-x-1/2',
+                      exploreLocked && 'hidden',
+                    )}
+                  >
+                    <Toolbar
+                      navMode={navMode}
+                      onNavMode={setNavMode}
+                      slice={slice.enabled}
+                      onSlice={toggleSlice}
+                      measure={measureMode}
+                      onMeasure={() => setMeasureMode((m) => !m)}
+                      display={display}
+                      onDisplay={(d) => {
+                        setGrid(d.grid);
+                        setOrtho(d.ortho);
+                        setBackground(d.background);
+                        setAnimate(d.animate);
+                        setLabels(d.labels);
+                      }}
+                      onReset={() => viewportRef.current?.fit()}
+                      showFps={showFps}
+                      onShowFps={setShowFps}
+                      hoverTips={hoverTips}
+                      onHoverTips={setHoverTips}
+                      onHelp={() => setHelp(true)}
+                      fullscreen={fullscreen}
+                      onFullscreen={toggleFullscreen}
+                      texturePacks={texturePacks}
+                      activePackId={activePackId}
+                      onSelectPack={setActivePackId}
+                      onUploadPack={(f) => void handleUploadPack(f)}
+                      onDeletePack={(id) => void handleDeletePack(id)}
+                    />
+                  </div>
+                </>
+              )}
+              {pluginRun && pluginRun.plugin.Panel && makeHost(pluginRun.plugin) && (
+                <div className="absolute top-3 left-3 z-20 w-80">
+                  <pluginRun.plugin.Panel
+                    host={makeHost(pluginRun.plugin)!}
+                    block={pluginRun.block}
+                    action={pluginRun.action}
+                    onClose={closePlugin}
                   />
                 </div>
-              </>
-            )}
-            {pluginRun && pluginRun.plugin.Panel && makeHost(pluginRun.plugin) && (
-              <div className="absolute top-3 left-3 z-20 w-80">
-                <pluginRun.plugin.Panel
-                  host={makeHost(pluginRun.plugin)!}
-                  block={pluginRun.block}
-                  action={pluginRun.action}
-                  onClose={closePlugin}
-                />
-              </div>
-            )}
-            {!schematic && (
-              <Welcome loading={loading} onOpen={() => setOpenDialog(true)} onExample={() => void openUrl(EXAMPLE)} />
-            )}
-            {dragging && (
-              <div className="pointer-events-none absolute inset-3 z-30 flex items-center justify-center border-2 border-dashed border-primary bg-primary/10 text-lg font-medium text-primary">
-                {t('app.dropHere')}
-              </div>
-            )}
-            {loading && schematic && (
-              <div className="absolute top-3 left-1/2 z-30 -translate-x-1/2 bg-card px-3 py-1 text-sm shadow">
-                {t('app.loading')}
-              </div>
-            )}
-          </main>
+              )}
+              {!schematic && (
+                <Welcome loading={loading} onOpen={() => setOpenDialog(true)} onExample={() => void openUrl(EXAMPLE)} />
+              )}
+              {dragging && (
+                <div className="pointer-events-none absolute inset-3 z-30 flex items-center justify-center border-2 border-dashed border-primary bg-primary/10 text-lg font-medium text-primary">
+                  {t('app.dropHere')}
+                </div>
+              )}
+              {loading && schematic && (
+                <div className="absolute top-3 left-1/2 z-30 -translate-x-1/2 bg-card px-3 py-1 text-sm shadow">
+                  {t('app.loading')}
+                </div>
+              )}
+            </main>
+          </div>
+          <HotkeysDialog open={help} onOpenChange={setHelp} />
+          <OpenDialog
+            open={openDialog}
+            onOpenChange={setOpenDialog}
+            onUrl={(u) => void openUrl(u)}
+            onFile={(f) => void openFile(f)}
+            onExample={() => void openUrl(EXAMPLE)}
+            onError={onError}
+            loading={loading}
+          />
         </div>
-        <HotkeysDialog open={help} onOpenChange={setHelp} />
-        <OpenDialog
-          open={openDialog}
-          onOpenChange={setOpenDialog}
-          onUrl={(u) => void openUrl(u)}
-          onFile={(f) => void openFile(f)}
-          onExample={() => void openUrl(EXAMPLE)}
-          onError={onError}
-          loading={loading}
-        />
-      </div>
-    </TooltipProvider>
+      </TooltipProvider>
+    </TerrainUrlContext.Provider>
   );
 }
 

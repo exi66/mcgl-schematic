@@ -114,6 +114,11 @@ interface LoadedModel {
   ghost: THREE.Material;
 }
 
+interface LoadedAtlas {
+  animator: AtlasAnimator;
+  texture: THREE.CanvasTexture;
+}
+
 export class Viewer {
   readonly renderer: THREE.WebGLRenderer;
   private readonly scene = new THREE.Scene();
@@ -176,6 +181,7 @@ export class Viewer {
     this.resizeObserver.observe(host);
     this.setupControls();
     this.resize();
+    this.terrainGate = new Promise((resolve) => (this.openTerrainGate = resolve));
     this.ready = this.loadAssets();
   }
 
@@ -531,14 +537,22 @@ export class Viewer {
 
   private terrainUrl: string | null = null;
   private loadedTerrainUrl: string | null = null;
+  /** Bumped by every setTerrainUrl: a slower, older atlas load must not overwrite a newer choice. */
+  private terrainSeq = 0;
+  /** Opened by the first setTerrainUrl, so the first atlas load already uses the saved texture pack. */
+  private terrainGate!: Promise<void>;
+  private openTerrainGate!: () => void;
 
   private async loadAssets(): Promise<void> {
     const base = import.meta.env.BASE_URL;
     // Canvas labels and stub textures use the UI font: wait for it.
     await document.fonts?.load(`bold 48px ${CANVAS_FONT}`).catch(() => undefined);
+    await this.terrainGate;
     const target = this.terrainUrl ?? `${base}assets/terrain.png`;
     this.loadedTerrainUrl = target;
-    const terrain = await this.loadAtlas(target);
+    const atlas = await this.loadAtlas(target);
+    this.adoptAtlas(atlas);
+    const terrain = atlas.texture;
     const stub = pixelTexture(new THREE.CanvasTexture(makeStubAtlas()));
     const basic = (p: THREE.MeshBasicMaterialParameters) => new THREE.MeshBasicMaterial({ vertexColors: true, ...p });
     this.materials = {
@@ -594,17 +608,27 @@ export class Viewer {
 
   /** Switches the terrain atlas at runtime (null = built-in terrain.png). */
   async setTerrainUrl(url: string | null): Promise<void> {
+    const seq = ++this.terrainSeq;
     this.terrainUrl = url;
+    this.openTerrainGate();
     await this.ready;
-    if (this.disposed) return;
+    if (this.disposed || seq !== this.terrainSeq) return;
     const target = url ?? `${import.meta.env.BASE_URL}assets/terrain.png`;
     if (this.loadedTerrainUrl === target) return;
-    const prev = this.atlasTexture;
-    const tex = await this.loadAtlas(target);
-    if (this.disposed) {
-      tex.dispose();
+    let atlas: LoadedAtlas;
+    try {
+      atlas = await this.loadAtlas(target);
+    } catch (e) {
+      if (seq !== this.terrainSeq) return; // superseded: its error no longer matters
+      throw e;
+    }
+    if (this.disposed || seq !== this.terrainSeq) {
+      atlas.texture.dispose();
       return;
     }
+    const prev = this.atlasTexture;
+    const tex = atlas.texture;
+    this.adoptAtlas(atlas);
     this.loadedTerrainUrl = target;
     for (const mat of [
       this.materials!.solid,
@@ -619,8 +643,15 @@ export class Viewer {
     this.requestRender();
   }
 
-  /** Loads the atlas into a canvas so animated tiles can be redrawn every tick. */
-  private async loadAtlas(url: string): Promise<THREE.Texture> {
+  /** Makes a loaded atlas the animated one (its canvas is what the animation loop redraws). */
+  private adoptAtlas(a: LoadedAtlas): void {
+    this.animator = a.animator;
+    this.atlasTexture = a.texture;
+    this.startAnimation();
+  }
+
+  /** Loads the atlas into a canvas so animated tiles can be redrawn every tick. No side effects until adoptAtlas. */
+  private async loadAtlas(url: string): Promise<LoadedAtlas> {
     const img = new Image();
     img.src = url;
     await img.decode().catch(() => {
@@ -631,10 +662,7 @@ export class Viewer {
     canvas.height = img.height;
     const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
     ctx.drawImage(img, 0, 0);
-    this.animator = new AtlasAnimator(ctx);
-    this.atlasTexture = pixelTexture(new THREE.CanvasTexture(canvas));
-    this.startAnimation();
-    return this.atlasTexture;
+    return { animator: new AtlasAnimator(ctx), texture: pixelTexture(new THREE.CanvasTexture(canvas)) };
   }
 
   private startAnimation(): void {
@@ -941,6 +969,7 @@ export class Viewer {
 
   dispose(): void {
     this.disposed = true;
+    this.openTerrainGate();
     cancelAnimationFrame(this.frame);
     cancelAnimationFrame(this.loop);
     cancelAnimationFrame(this.animLoop);

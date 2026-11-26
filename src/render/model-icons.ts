@@ -46,7 +46,7 @@ function loadTexture(url: string): Promise<THREE.Texture> {
 
 async function renderModelIcon(name: string): Promise<string | null> {
   const renderer = getRenderer();
-  if (!renderer) return null;
+  if (!renderer) return null; // no WebGL: stays null for good (cached)
 
   const short = name.split('/').pop();
   const [xml, tex] = await Promise.all([
@@ -131,15 +131,16 @@ export function getModelIcon(name: string): Promise<string | null> {
   let p = pending.get(name);
   if (!p) {
     p = renderModelIcon(name)
+      .then((url) => {
+        cache.set(name, url);
+        return url;
+      })
       .catch((e) => {
+        // A failure (network, bad file) is not cached: the next mount tries again.
         console.warn(`Model icon ${name} failed:`, e);
         return null;
       })
-      .then((url) => {
-        cache.set(name, url);
-        pending.delete(name);
-        return url;
-      });
+      .finally(() => pending.delete(name));
     pending.set(name, p);
   }
   return p;

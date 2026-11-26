@@ -21,8 +21,18 @@ const DB_VERSION = 1;
 const urlCache = new Map<string, string>();
 const memoryStore = new Map<string, StoredPack>();
 
+/** The built-in HD atlas, selectable like a saved pack (its id is stored as the active pack). */
+export const BUILTIN_HD_PACK = {
+  id: 'builtin:hd',
+  url: `${import.meta.env.BASE_URL}assets/terrain-hd.png`,
+  size: 2048,
+} as const;
+
+/** Largest accepted terrain.png side: 2048 is 64-px tiles; larger atlases risk the GPU texture limit and a huge getImageData. */
+export const MAX_TERRAIN_SIZE = 2048;
+
 export function isValidTerrainSize(width: number, height: number): boolean {
-  return width === height && width >= ATLAS_SIZE && width % 32 === 0;
+  return width === height && width >= ATLAS_SIZE && width <= MAX_TERRAIN_SIZE && width % 32 === 0;
 }
 
 function openDb(): Promise<IDBDatabase | null> {
@@ -60,6 +70,11 @@ async function measureImage(file: Blob): Promise<{ width: number; height: number
   } finally {
     URL.revokeObjectURL(url);
   }
+}
+
+/** Pack name shown in the list: the file name without .png. */
+export function packName(file: File): string {
+  return file.name.replace(/\.png$/i, '') || 'terrain';
 }
 
 function toMeta(p: StoredPack): TexturePackMeta {
@@ -113,7 +128,7 @@ export async function saveTexturePack(file: File): Promise<TexturePackMeta> {
       : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const pack: StoredPack = {
     id,
-    name: file.name.replace(/\.png$/i, '') || 'terrain',
+    name: packName(file),
     width,
     height,
     sizeBytes: file.size,

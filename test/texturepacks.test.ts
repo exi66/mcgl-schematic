@@ -6,7 +6,6 @@ describe('isValidTerrainSize', () => {
     expect(isValidTerrainSize(512, 512)).toBe(true);
     expect(isValidTerrainSize(1024, 1024)).toBe(true);
     expect(isValidTerrainSize(2048, 2048)).toBe(true);
-    expect(isValidTerrainSize(4096, 4096)).toBe(true);
   });
 
   it('rejects non-square, too small, or unaligned sizes', () => {
@@ -14,5 +13,6 @@ describe('isValidTerrainSize', () => {
     expect(isValidTerrainSize(512, 1024)).toBe(false);
     expect(isValidTerrainSize(513, 513)).toBe(false);
     expect(isValidTerrainSize(0, 0)).toBe(false);
+    expect(isValidTerrainSize(4096, 4096)).toBe(false);
   });
 });

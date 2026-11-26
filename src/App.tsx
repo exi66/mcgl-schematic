@@ -24,9 +24,11 @@ import { useDarkTheme } from '@/hooks/use-dark-theme';
 import { useStored } from '@/hooks/use-stored';
 import { APP_NAME } from '@/lib/app';
 import {
+  BUILTIN_HD_PACK,
   deleteTexturePack,
   getTexturePackUrl,
   listTexturePacks,
+  packName,
   saveTexturePack,
   type TexturePackMeta,
 } from '@/lib/texturepacks';
@@ -81,7 +83,8 @@ export default function App() {
     schema: z.string().nullable(),
   });
   const [texturePacks, setTexturePacks] = useState<TexturePackMeta[]>([]);
-  const [terrainUrl, setTerrainUrl] = useState<string | null>(null);
+  // undefined until the saved texture pack is found, so the viewer does not load the built-in atlas first.
+  const [terrainUrl, setTerrainUrl] = useState<string | null | undefined>(activePackId ? undefined : null);
   const [sidebar, setSidebar, sidebarFromLink] = useStored('sidebar', true, {
     schema: z.boolean(),
     override: initial.list,
@@ -114,7 +117,12 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
-    const load = activePackId ? getTexturePackUrl(activePackId) : Promise.resolve(null);
+    const load =
+      activePackId === BUILTIN_HD_PACK.id
+        ? Promise.resolve(BUILTIN_HD_PACK.url)
+        : activePackId
+          ? getTexturePackUrl(activePackId)
+          : Promise.resolve(null);
     void load.then((url) => {
       if (cancelled) return;
       if (activePackId && !url) {
@@ -132,6 +140,12 @@ export default function App() {
   const handleUploadPack = useCallback(
     async (file: File) => {
       setError(null);
+      // The same file again: just select the pack we already have.
+      const same = texturePacks.find((p) => p.name === packName(file) && p.sizeBytes === file.size);
+      if (same) {
+        setActivePackId(same.id);
+        return;
+      }
       try {
         const meta = await saveTexturePack(file);
         setTexturePacks((prev) => [...prev, meta]);
@@ -140,7 +154,7 @@ export default function App() {
         setError((e as Error).message);
       }
     },
-    [setActivePackId],
+    [texturePacks, setActivePackId],
   );
 
   const handleDeletePack = useCallback(
@@ -338,7 +352,7 @@ export default function App() {
   const fmt = new Intl.NumberFormat(i18n.language);
 
   return (
-    <TerrainUrlContext.Provider value={terrainUrl}>
+    <TerrainUrlContext.Provider value={terrainUrl ?? null}>
       <TooltipProvider delay={300}>
         <div
           className="flex h-full flex-col"

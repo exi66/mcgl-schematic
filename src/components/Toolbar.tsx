@@ -24,7 +24,7 @@ import { type ReactNode, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HexColorPicker } from 'react-colorful';
 import { cn } from '@/lib/utils';
-import type { TexturePackMeta } from '@/lib/texturepacks';
+import { BUILTIN_HD_PACK, type TexturePackMeta } from '@/lib/texturepacks';
 import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -227,6 +227,16 @@ function DisplayMenu({
           </span>
           <span className="flex-1 truncate">{t('texturepack.default')}</span>
         </button>
+        <button
+          type="button"
+          className="flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-left text-[12px] transition-colors hover:bg-muted/60"
+          onClick={() => onSelectPack(BUILTIN_HD_PACK.id)}
+        >
+          <span className="inline-flex w-3.5 shrink-0 text-primary [&_svg]:size-3.5">
+            {activePackId === BUILTIN_HD_PACK.id && <Check />}
+          </span>
+          <span className="flex-1 truncate">{t('texturepack.hd')}</span>
+        </button>
         {texturePacks.map((p) => (
           <div
             key={p.id}
@@ -260,7 +270,7 @@ function DisplayMenu({
         <input
           ref={fileRef}
           type="file"
-          accept="image/png,image/*"
+          accept="image/png"
           className="hidden"
           onChange={(e) => {
             const f = e.target.files?.[0];

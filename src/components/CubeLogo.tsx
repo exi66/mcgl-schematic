@@ -1,6 +1,10 @@
 import { cn } from '@/lib/utils';
 
-/** The app's cube (same shape as favicon.svg) in the theme's primary colour: right face primary, left darker, top lighter. */
+/**
+ * The app's cube in the theme's primary colour: right face primary, left darker, top lighter.
+ * public/favicon.svg is the same cube with these colours baked in for the light theme's primary
+ * (oklch(0.52 0.15 280) → #5b5abc, 70% with black → #353573, 55% with white → #9fa4dd); update it when the theme changes.
+ */
 export function CubeLogo({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" aria-hidden="true" className={cn('size-6 shrink-0', className)}>

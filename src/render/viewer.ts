@@ -11,7 +11,7 @@ import type { GeoArrays } from './geometry';
 import { meshRegion, type ModelInstance, type Voxels } from './mesher';
 import { buildModelGeometry, modelRotationDeg, parseModel } from './model';
 import { CANVAS_FONT, disposeObject, makeGrid, makeMeasureBox, type Cell } from './overlays';
-import { accentColor } from './theme-color';
+import { accentColor, accentHoverColor } from './theme-color';
 import { pickVoxel, type PickHit } from './pick';
 import { makeStubAtlas } from './stubs';
 import { AtlasAnimator } from './texfx';
@@ -913,7 +913,7 @@ export class Viewer {
 
   setHover(pos: Cell | null): void {
     this.hoverCell = pos;
-    this.hoverBox ??= this.outline(0xffffff);
+    this.hoverBox ??= this.outline(accentHoverColor(this.display.dark));
     this.syncHoverBox();
     if (pos) this.hoverBox.position.set(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5);
     this.requestRender();
@@ -929,7 +929,7 @@ export class Viewer {
 
   setSelected(pos: Cell | null): void {
     this.selectedCell = pos;
-    this.selectObj ??= this.outline(accentColor(this.display.dark), 1.02);
+    this.selectObj ??= this.outline(accentColor(this.display.dark), 1.05);
     this.selectObj.visible = pos !== null;
     this.syncHoverBox();
     if (pos) this.selectObj.position.set(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5);

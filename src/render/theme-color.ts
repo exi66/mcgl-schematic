@@ -24,5 +24,7 @@ export function cssColor(css: string, fallback = 0x4da3ff): THREE.Color {
  * Accent for lines in the scene (selection, schematic bounds): the theme's primary. In the dark theme primary is too
  * dark for thin lines on a dark background, so it is lightened there.
  */
-export const accentColor = (dark: boolean) =>
-  cssColor(dark ? 'color-mix(in oklab, var(--primary) 60%, white)' : 'var(--primary)');
+export const accentColor = (_dark: boolean) => cssColor('var(--primary)');
+
+export const accentHoverColor = (_dark: boolean) =>
+  cssColor('color-mix(in oklab, var(--primary) 90%, var(--background))');

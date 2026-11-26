@@ -1,9 +1,12 @@
+import { createContext, useContext, useEffect, useState } from 'react';
 import { blockDef, type RenderKind, type Side } from '../blocks/pool';
 import { tileX, tileY } from '../render/atlas';
+import { getModelIcon, peekModelIcon } from '../render/model-icons';
 import { FX_SLOTS } from '../render/texfx';
 import { cn } from '@/lib/utils';
 
 const BASE = import.meta.env.BASE_URL;
+export const TerrainUrlContext = createContext<string | null>(null);
 const FX_INDEX = new Map<number, number>(FX_SLOTS.map((s, i) => [s, i]));
 
 /** Face shown as the icon: the front, like an item in the game; the top only where the top is the face. */
@@ -34,7 +37,22 @@ export function BlockIcon({
   size?: number;
   className?: string;
 }) {
+  const terrainUrl = useContext(TerrainUrlContext);
   const d = blockDef(id);
+  const modelName = d?.model?.(meta);
+  const [loaded, setLoaded] = useState<{ name: string; src: string | null } | null>(null);
+
+  useEffect(() => {
+    if (!modelName || peekModelIcon(modelName) !== undefined) return;
+    let cancelled = false;
+    void getModelIcon(modelName).then((src) => {
+      if (!cancelled) setLoaded({ name: modelName, src });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [modelName]);
+
   if (!d) {
     return (
       <span
@@ -48,7 +66,21 @@ export function BlockIcon({
       </span>
     );
   }
-  if (d.model?.(meta)) {
+  if (modelName) {
+    const cached = peekModelIcon(modelName);
+    const src = cached !== undefined ? cached : loaded?.name === modelName ? loaded.src : null;
+    if (src) {
+      return (
+        <img
+          src={src}
+          alt=""
+          width={size}
+          height={size}
+          className={cn('pixelated inline-block shrink-0', className)}
+          style={{ width: size, height: size }}
+        />
+      );
+    }
     return (
       <span
         className={cn('inline-block shrink-0', className)}
@@ -70,7 +102,7 @@ export function BlockIcon({
           backgroundColor: 'var(--muted)',
         }
       : {
-          backgroundImage: `url(${BASE}assets/terrain.png)`,
+          backgroundImage: `url(${terrainUrl ?? `${BASE}assets/terrain.png`})`,
           backgroundSize: `${512 * k}px ${512 * k}px`,
           backgroundPosition: `${-tileX(tex) * k}px ${-tileY(tex) * k}px`,
           backgroundColor: wire ? d.color : undefined,

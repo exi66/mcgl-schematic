@@ -1,6 +1,7 @@
 import {
   Activity,
   Box,
+  Check,
   ChevronUp,
   Compass,
   Footprints,
@@ -16,11 +17,14 @@ import {
   RotateCcw,
   Ruler,
   Sparkles,
+  Trash2,
+  Upload,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HexColorPicker } from 'react-colorful';
 import { cn } from '@/lib/utils';
+import type { TexturePackMeta } from '@/lib/texturepacks';
 import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -115,6 +119,11 @@ function DisplayMenu({
   onShowFps,
   hoverTips,
   onHoverTips,
+  texturePacks,
+  activePackId,
+  onSelectPack,
+  onUploadPack,
+  onDeletePack,
 }: {
   display: DisplayState;
   onDisplay: (d: DisplayState) => void;
@@ -123,8 +132,14 @@ function DisplayMenu({
   onShowFps: (v: boolean) => void;
   hoverTips: boolean;
   onHoverTips: (v: boolean) => void;
+  texturePacks: TexturePackMeta[];
+  activePackId: string | null;
+  onSelectPack: (id: string | null) => void;
+  onUploadPack: (file: File) => void;
+  onDeletePack: (id: string) => void;
 }) {
   const { t } = useTranslation();
+  const fileRef = useRef<HTMLInputElement>(null);
   const bg = display.background ?? themeBackground(display.dark);
   return (
     <>
@@ -199,6 +214,71 @@ function DisplayMenu({
         />
         <div className="mt-1.5 text-center text-[10.5px] text-muted-foreground uppercase">{bg}</div>
       </div>
+      <div className="my-1.5 h-px bg-border" />
+      <MenuTitle>{t('texturepack.title')}</MenuTitle>
+      <div className="flex flex-col gap-0.5 pb-1">
+        <button
+          type="button"
+          className="flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-left text-[12px] transition-colors hover:bg-muted/60"
+          onClick={() => onSelectPack(null)}
+        >
+          <span className="inline-flex w-3.5 shrink-0 text-primary [&_svg]:size-3.5">
+            {activePackId === null && <Check />}
+          </span>
+          <span className="flex-1 truncate">{t('texturepack.default')}</span>
+        </button>
+        {texturePacks.map((p) => (
+          <div
+            key={p.id}
+            className="group flex items-center gap-1 px-2 py-1 text-[12px] transition-colors hover:bg-muted/60"
+          >
+            <button
+              type="button"
+              className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
+              onClick={() => onSelectPack(p.id)}
+              title={`${p.name} (${p.width}×${p.height})`}
+            >
+              <span className="inline-flex w-3.5 shrink-0 text-primary [&_svg]:size-3.5">
+                {activePackId === p.id && <Check />}
+              </span>
+              <span className="min-w-0 flex-1 truncate">{p.name}</span>
+              <span className="shrink-0 text-[10.5px] text-muted-foreground tabular-nums">
+                {p.width}×{p.height}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="p-0.5 text-muted-foreground hover:text-destructive [&_svg]:size-3"
+              onClick={() => onDeletePack(p.id)}
+              title={t('texturepack.delete')}
+              aria-label={t('texturepack.delete')}
+            >
+              <Trash2 />
+            </button>
+          </div>
+        ))}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/png,image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = '';
+            if (f) onUploadPack(f);
+          }}
+        />
+        <button
+          type="button"
+          className="mt-0.5 flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-left text-[12px] text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+          onClick={() => fileRef.current?.click()}
+        >
+          <span className="inline-flex w-3.5 shrink-0 [&_svg]:size-3.5">
+            <Upload />
+          </span>
+          <span>{t('texturepack.upload')}</span>
+        </button>
+      </div>
     </>
   );
 }
@@ -227,6 +307,11 @@ export function Toolbar({
   onHelp,
   fullscreen,
   onFullscreen,
+  texturePacks,
+  activePackId,
+  onSelectPack,
+  onUploadPack,
+  onDeletePack,
 }: {
   navMode: NavMode;
   onNavMode: (m: NavMode) => void;
@@ -244,6 +329,11 @@ export function Toolbar({
   onHelp: () => void;
   fullscreen: boolean;
   onFullscreen: () => void;
+  texturePacks: TexturePackMeta[];
+  activePackId: string | null;
+  onSelectPack: (id: string | null) => void;
+  onUploadPack: (file: File) => void;
+  onDeletePack: (id: string) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -288,6 +378,11 @@ export function Toolbar({
                 onShowFps={onShowFps}
                 hoverTips={hoverTips}
                 onHoverTips={onHoverTips}
+                texturePacks={texturePacks}
+                activePackId={activePackId}
+                onSelectPack={onSelectPack}
+                onUploadPack={onUploadPack}
+                onDeletePack={onDeletePack}
               />
             </div>
           </ScrollArea>

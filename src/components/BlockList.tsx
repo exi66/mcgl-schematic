@@ -1,5 +1,6 @@
 import { Crosshair, Eye, EyeOff } from 'lucide-react';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { blockDef, variantKey, variantMeta, variantName } from '../blocks/pool';
 import type { Schematic } from '../schematic/schematic';
 import { BlockIcon } from './BlockIcon';
@@ -56,7 +57,8 @@ export function BlockList({
   onToggleHidden: (key: string) => void;
   onHighlight: (key: string | null) => void;
 }) {
-  const fmt = useMemo(() => new Intl.NumberFormat('ru-RU'), []);
+  const { t, i18n } = useTranslation();
+  const fmt = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language]);
   return (
     <ul className="flex flex-col gap-px">
       {stats.map((st) => {
@@ -76,7 +78,7 @@ export function BlockList({
                 type="button"
                 className="flex min-w-0 flex-1 items-center gap-2 text-left"
                 onClick={() => onToggleHidden(st.key)}
-                title={`${st.name} — ${st.key}${known ? '' : ' (нет в пуле, заглушка)'}\n${isHidden ? 'Показать' : 'Скрыть'}`}
+                title={`${st.name} — ${st.key}${known ? '' : ` (${t('blockList.stub')})`}\n${isHidden ? t('blockList.show') : t('blockList.hide')}`}
               >
                 <BlockIcon id={st.id} meta={st.iconMeta} />
                 <span className={cn('min-w-0 flex-1 truncate', !known && 'text-muted-foreground italic')}>
@@ -94,8 +96,8 @@ export function BlockList({
                   isHl ? 'text-primary' : 'opacity-0 group-hover:opacity-100',
                 )}
                 onClick={() => onHighlight(isHl ? null : st.key)}
-                title={isHl ? 'Снять подсветку' : 'Подсветить: остальные блоки станут полупрозрачными'}
-                aria-label="Подсветить"
+                title={isHl ? t('blockList.unhighlight') : t('blockList.highlightTip')}
+                aria-label={t('blockList.highlight')}
               >
                 <Crosshair />
               </button>

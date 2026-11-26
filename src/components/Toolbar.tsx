@@ -18,6 +18,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { HexColorPicker } from 'react-colorful';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -123,51 +124,52 @@ function DisplayMenu({
   hoverTips: boolean;
   onHoverTips: (v: boolean) => void;
 }) {
+  const { t } = useTranslation();
   const bg = display.background ?? themeBackground(display.dark);
   return (
     <>
-      <MenuTitle>Отображение</MenuTitle>
+      <MenuTitle>{t('toolbar.display')}</MenuTitle>
       <button type="button" className={rowClass} onClick={onReset}>
-        <RowContent icon={<RotateCcw />} label="Сбросить вид" hotkey="R" />
+        <RowContent icon={<RotateCcw />} label={t('toolbar.reset')} hotkey="R" />
       </button>
       <MenuSwitch
         icon={<Grid3x3 />}
-        label="Сетка на полу"
+        label={t('toolbar.grid')}
         hotkey="G"
         checked={display.grid}
         onChange={(grid) => onDisplay({ ...display, grid })}
       />
       <MenuSwitch
         icon={<Compass />}
-        label="Подписи сторон ±X ±Z"
+        label={t('toolbar.labels')}
         checked={display.labels}
         onChange={(labels) => onDisplay({ ...display, labels })}
       />
       <MenuSwitch
         icon={<Box />}
-        label="Ортографическая камера"
+        label={t('toolbar.ortho')}
         hotkey="O"
         checked={display.ortho}
         onChange={(ortho) => onDisplay({ ...display, ortho })}
       />
       <MenuSwitch
         icon={<Sparkles />}
-        label="Анимация текстур"
+        label={t('toolbar.animate')}
         checked={display.animate}
         onChange={(animate) => onDisplay({ ...display, animate })}
       />
-      <MenuSwitch icon={<MousePointer2 />} label="Подсказка при наведении" checked={hoverTips} onChange={onHoverTips} />
-      <MenuSwitch icon={<Activity />} label="Счётчик FPS" checked={showFps} onChange={onShowFps} />
+      <MenuSwitch icon={<MousePointer2 />} label={t('toolbar.hoverTips')} checked={hoverTips} onChange={onHoverTips} />
+      <MenuSwitch icon={<Activity />} label={t('toolbar.fps')} checked={showFps} onChange={onShowFps} />
       <div className="my-1.5 h-px bg-border" />
       <div className="flex items-center justify-between pr-1">
-        <MenuTitle>Фон</MenuTitle>
+        <MenuTitle>{t('toolbar.background')}</MenuTitle>
         {display.background !== null && (
           <button
             type="button"
             className="text-[10.5px] text-muted-foreground hover:text-foreground"
             onClick={() => onDisplay({ ...display, background: null })}
           >
-            по теме
+            {t('toolbar.themeBackground')}
           </button>
         )}
       </div>
@@ -201,10 +203,11 @@ function DisplayMenu({
   );
 }
 
-const NAV_MODES: { value: NavMode; label: string; short: string; hotkey: string; icon: ReactNode }[] = [
-  { value: 'orbit', label: 'Вращение', short: 'Вращение', hotkey: '1', icon: <Rotate3d /> },
-  { value: 'plan', label: 'План (вид сверху)', short: 'План', hotkey: '2', icon: <Map /> },
-  { value: 'explore', label: 'Обзор: ходьба и полёт', short: 'Обзор', hotkey: '3', icon: <Footprints /> },
+/** Labels: toolbar.modes.<value>.label / .short in the messages. */
+const NAV_MODES: { value: NavMode; hotkey: string; icon: ReactNode }[] = [
+  { value: 'orbit', hotkey: '1', icon: <Rotate3d /> },
+  { value: 'plan', hotkey: '2', icon: <Map /> },
+  { value: 'explore', hotkey: '3', icon: <Footprints /> },
 ];
 
 export function Toolbar({
@@ -242,24 +245,32 @@ export function Toolbar({
   fullscreen: boolean;
   onFullscreen: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="pointer-events-auto flex items-center border bg-card/95 p-1 shadow-lg backdrop-blur">
       <ToolbarModes navMode={navMode} onNavMode={onNavMode} />
       <Sep />
-      <Tip content={tipText('Срез', 'L')}>
-        <Toggle aria-label="Срез" pressed={slice} onPressedChange={() => onSlice()} className={toolClass}>
+      <Tip content={tipText(t('toolbar.slice'), 'L')}>
+        <Toggle aria-label={t('toolbar.slice')} pressed={slice} onPressedChange={() => onSlice()} className={toolClass}>
           <Layers />
         </Toggle>
       </Tip>
-      <Tip content={tipText('Линейка: протяните по блокам (или Shift + перетаскивание)', '⇧ drag')}>
-        <Toggle aria-label="Линейка" pressed={measure} onPressedChange={() => onMeasure()} className={toolClass}>
+      <Tip content={tipText(t('toolbar.measureTip'), '⇧ drag')}>
+        <Toggle
+          aria-label={t('toolbar.measure')}
+          pressed={measure}
+          onPressedChange={() => onMeasure()}
+          className={toolClass}
+        >
           <Ruler />
         </Toggle>
       </Tip>
       <Popover>
-        <Tip content="Отображение">
+        <Tip content={t('toolbar.display')}>
           <PopoverTrigger
-            render={<Button variant="ghost" aria-label="Отображение" className={cn(toolClass, 'gap-0.5 px-2')} />}
+            render={
+              <Button variant="ghost" aria-label={t('toolbar.display')} className={cn(toolClass, 'gap-0.5 px-2')} />
+            }
           >
             <Palette />
             <ChevronUp className="size-3! opacity-60" />
@@ -283,13 +294,13 @@ export function Toolbar({
         </PopoverContent>
       </Popover>
       <Sep />
-      <Tip content={tipText('Горячие клавиши', '?')}>
-        <Button variant="ghost" aria-label="Горячие клавиши" onClick={onHelp} className={toolClass}>
+      <Tip content={tipText(t('toolbar.hotkeys'), '?')}>
+        <Button variant="ghost" aria-label={t('toolbar.hotkeys')} onClick={onHelp} className={toolClass}>
           <Keyboard />
         </Button>
       </Tip>
-      <Tip content={tipText(fullscreen ? 'Выйти из полноэкранного режима' : 'Полный экран', 'F')}>
-        <Button variant="ghost" aria-label="Полный экран" onClick={onFullscreen} className={toolClass}>
+      <Tip content={tipText(fullscreen ? t('toolbar.exitFullscreen') : t('toolbar.fullscreen'), 'F')}>
+        <Button variant="ghost" aria-label={t('toolbar.fullscreen')} onClick={onFullscreen} className={toolClass}>
           {fullscreen ? <Minimize /> : <Maximize />}
         </Button>
       </Tip>
@@ -299,6 +310,7 @@ export function Toolbar({
 
 /** Orbit / plan / explore: one of three (shadcn ToggleGroup). */
 function ToolbarModes({ navMode, onNavMode }: { navMode: NavMode; onNavMode: (m: NavMode) => void }) {
+  const { t } = useTranslation();
   return (
     <ToggleGroup
       value={[navMode]}
@@ -308,13 +320,13 @@ function ToolbarModes({ navMode, onNavMode }: { navMode: NavMode; onNavMode: (m:
       }}
     >
       {NAV_MODES.map((m) => (
-        <Tip key={m.value} content={tipText(m.label, m.hotkey)}>
+        <Tip key={m.value} content={tipText(t(`toolbar.modes.${m.value}.label`), m.hotkey)}>
           <ToggleGroupItem
             value={m.value}
-            aria-label={m.label}
+            aria-label={t(`toolbar.modes.${m.value}.label`)}
             className={cn(toolClass, 'aria-pressed:bg-primary aria-pressed:text-primary-foreground')}
           >
-            {m.icon} <span className="hidden sm:inline">{m.short}</span>
+            {m.icon} <span className="hidden sm:inline">{t(`toolbar.modes.${m.value}.short`)}</span>
           </ToggleGroupItem>
         </Tip>
       ))}

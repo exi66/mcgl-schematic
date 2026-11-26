@@ -1,3 +1,4 @@
+import i18next from 'i18next';
 import { gunzip, isGzip, readNbt, type NbtCompound, type NbtValue } from './nbt';
 
 /** MCEdit .schematic contents. Index of a block: (y * length + z) * width + x. */
@@ -18,7 +19,7 @@ export function blockIndex(s: Pick<Schematic, 'width' | 'length'>, x: number, y:
 }
 
 function num(v: NbtValue | undefined, name: string): number {
-  if (typeof v !== 'number') throw new SchematicError(`Нет поля ${name} — это не схематика MCEdit`);
+  if (typeof v !== 'number') throw new SchematicError(i18next.t('errors.noField', { name }));
   return v;
 }
 
@@ -26,28 +27,28 @@ export function schematicFromNbt(root: NbtCompound): Schematic {
   const width = num(root.Width, 'Width');
   const height = num(root.Height, 'Height');
   const length = num(root.Length, 'Length');
-  if (width <= 0 || height <= 0 || length <= 0) throw new SchematicError('Пустая схематика');
+  if (width <= 0 || height <= 0 || length <= 0) throw new SchematicError(i18next.t('errors.empty'));
   const total = width * height * length;
   const rawBlocks = root.Blocks;
   const rawData = root.Data;
-  if (!(rawBlocks instanceof Int8Array)) throw new SchematicError('Нет массива Blocks');
+  if (!(rawBlocks instanceof Int8Array)) throw new SchematicError(i18next.t('errors.noBlocks'));
   if (rawBlocks.length !== total) {
-    throw new SchematicError(`Размер Blocks ${rawBlocks.length} не равен ${width}×${height}×${length}`);
+    throw new SchematicError(i18next.t('errors.blocksSize', { size: rawBlocks.length, width, height, length }));
   }
   const warnings: string[] = [];
   const materials = root.Materials;
   if (typeof materials === 'string' && materials !== 'Alpha') {
-    warnings.push(`Materials = "${materials}", ожидалось "Alpha"`);
+    warnings.push(i18next.t('warnings.materials', { materials }));
   }
   if (root.AddBlocks !== undefined || root.Add !== undefined) {
-    warnings.push('В схематике есть AddBlocks (id > 255) — они не поддерживаются, старшие биты отброшены');
+    warnings.push(i18next.t('warnings.addBlocks'));
   }
   const blocks = new Uint8Array(rawBlocks.buffer, rawBlocks.byteOffset, rawBlocks.length).slice();
   const data = new Uint8Array(total);
   if (rawData instanceof Int8Array && rawData.length === total) {
     for (let i = 0; i < total; i++) data[i] = rawData[i] & 15;
   } else {
-    warnings.push('Нет массива Data или неверная длина — metadata считается 0');
+    warnings.push(i18next.t('warnings.noData'));
   }
   const te = Array.isArray(root.TileEntities)
     ? (root.TileEntities.filter(
@@ -64,14 +65,14 @@ export async function parseSchematic(bytes: Uint8Array): Promise<Schematic> {
     try {
       raw = await gunzip(bytes);
     } catch {
-      throw new SchematicError('Файл повреждён: не удалось распаковать gzip');
+      throw new SchematicError(i18next.t('errors.gzip'));
     }
   }
   let parsed;
   try {
     parsed = readNbt(raw);
   } catch (e) {
-    throw new SchematicError(`Не схематика: ${(e as Error).message}`);
+    throw new SchematicError(i18next.t('errors.notSchematic', { reason: (e as Error).message }));
   }
   return schematicFromNbt(parsed.root);
 }

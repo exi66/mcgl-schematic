@@ -1,0 +1,191 @@
+{
+  "app": {
+    "home": "Главная",
+    "hideList": "Скрыть список блоков",
+    "showList": "Показать список блоков",
+    "blockList": "Список блоков",
+    "open": "Открыть",
+    "closeError": "закрыть",
+    "blocks": "Блоки",
+    "showAll": "показать все",
+    "blockCount_one": "{{formatted}} блок",
+    "blockCount_few": "{{formatted}} блока",
+    "blockCount_many": "{{formatted}} блоков",
+    "blockCount_other": "{{formatted}} блока",
+    "sliceLayer": "Слой {{axis}} {{layer}} из {{count}}",
+    "sliceUpTo": "До слоя {{axis}} {{layer}} из {{count}}",
+    "dropHere": "Отпустите файл .schematic",
+    "loading": "Загрузка…"
+  },
+  "theme": {
+    "light": "Светлая тема",
+    "dark": "Тёмная тема",
+    "toggle": "Сменить тему"
+  },
+  "welcome": {
+    "title": "Откройте схематику",
+    "text": "Вставьте ссылку на файл <code>.schematic</code>, выберите его с диска или просто перетащите сюда.",
+    "open": "Открыть схематику",
+    "example": "Пример: все блоки"
+  },
+  "open": {
+    "title": "Открыть схематику",
+    "description": "Ссылка на файл .schematic или файл с диска.",
+    "link": "Ссылка",
+    "submit": "Открыть",
+    "corsHint": "Сервер должен разрешать чтение с других сайтов (CORS): подойдут raw.githubusercontent.com, gist, Discord CDN.",
+    "or": "или",
+    "dropzone": "Выберите файл или перетащите его сюда",
+    "example": "Открыть пример со всеми блоками"
+  },
+  "toolbar": {
+    "modes": {
+      "orbit": { "label": "Вращение", "short": "Вращение" },
+      "plan": { "label": "План (вид сверху)", "short": "План" },
+      "explore": { "label": "Обзор: ходьба и полёт", "short": "Обзор" }
+    },
+    "slice": "Срез",
+    "measure": "Линейка",
+    "measureTip": "Линейка: протяните по блокам (или Shift + перетаскивание)",
+    "display": "Отображение",
+    "reset": "Сбросить вид",
+    "grid": "Сетка на полу",
+    "labels": "Подписи сторон ±X ±Z",
+    "ortho": "Ортографическая камера",
+    "animate": "Анимация текстур",
+    "hoverTips": "Подсказка при наведении",
+    "fps": "Счётчик FPS",
+    "background": "Фон",
+    "themeBackground": "по теме",
+    "hotkeys": "Горячие клавиши",
+    "fullscreen": "Полный экран",
+    "exitFullscreen": "Выйти из полноэкранного режима"
+  },
+  "slice": {
+    "axis": "Ось среза",
+    "byY": "Срез по Y (слои)",
+    "byAxis": "Срез по {{axis}}",
+    "of": "из {{count}}",
+    "position": "Положение среза",
+    "prev": "Предыдущий слой",
+    "next": "Следующий слой",
+    "showAll": "Показывать всё до среза",
+    "isolateTip": "Только этот слой, под ним — подложка",
+    "isolate": "Изолировать слой",
+    "close": "Закрыть срез"
+  },
+  "viewport": {
+    "flying": "Полёт · скорость {{speed}}",
+    "walking": "Ходьба",
+    "clickToLook": "Кликните, чтобы осмотреться",
+    "leaveExplore": "Чтобы выйти из обзора, переключите режим на панели ниже."
+  },
+  "explore": {
+    "fly": "Лететь",
+    "walk": "Идти",
+    "mouse": "Мышь",
+    "look": "Смотреть",
+    "up": "Вверх",
+    "jump": "Прыжок",
+    "down": "Вниз",
+    "sneak": "Присесть",
+    "land": "Приземлиться",
+    "takeOff": "Взлететь",
+    "sprint": "Бег",
+    "wheel": "Колесо",
+    "flySpeed": "Скорость полёта",
+    "releaseMouse": "Отпустить мышь"
+  },
+  "measure": {
+    "cells_one": "{{formatted}} клетка",
+    "cells_few": "{{formatted}} клетки",
+    "cells_many": "{{formatted}} клеток",
+    "cells_other": "{{formatted}} клетки",
+    "close": "Убрать измерение",
+    "blocksInside": "Блоков внутри",
+    "range": "От — до"
+  },
+  "block": {
+    "position": "Положение: {{x}}, {{y}}, {{z}}",
+    "stubShort": "Нет в пуле — показан заглушкой",
+    "stubLong": "Блок пока не поддерживается — показан заглушкой.",
+    "deselect": "Снять выделение"
+  },
+  "blockList": {
+    "stub": "нет в пуле, заглушка",
+    "show": "Показать",
+    "hide": "Скрыть",
+    "highlight": "Подсветить",
+    "highlightTip": "Подсветить: остальные блоки станут полупрозрачными",
+    "unhighlight": "Снять подсветку"
+  },
+  "exportMenu": {
+    "button": "Экспорт",
+    "tip": "Экспорт списка материалов",
+    "title": "Список материалов",
+    "formats": {
+      "md": "Markdown",
+      "bbcode": "BBCode (форум)"
+    },
+    "copy": "Скопировать",
+    "download": "Скачать файлом",
+    "fileSuffix": "материалы"
+  },
+  "hotkeys": {
+    "title": "Горячие клавиши",
+    "reopen": "Нажмите <kbd>?</kbd>, чтобы открыть снова.",
+    "sections": {
+      "view": "Вид",
+      "slice": "Срез",
+      "explore": "Обзор",
+      "panels": "Панели и выделение"
+    },
+    "orbit": "Вращение",
+    "plan": "План (сверху)",
+    "explore": "Обзор (ходьба / полёт)",
+    "reset": "Сбросить вид",
+    "slice": "Срез вкл / выкл",
+    "rotate": "Повернуть вид",
+    "ortho": "Орто / перспектива",
+    "grid": "Сетка на полу",
+    "nextLayer": "Следующий слой",
+    "prevLayer": "Предыдущий слой",
+    "tenLayers": "На 10 слоёв",
+    "isolate": "Изолировать слой",
+    "move": "Идти / лететь",
+    "jump": "Прыжок / вверх",
+    "flyWalk": "Полёт ↔ ходьба",
+    "sneak": "Присесть (не упасть с края) / вниз",
+    "sprint": "Бег (двойное вперёд)",
+    "flySpeed": "Скорость полёта",
+    "releaseMouse": "Отпустить мышь",
+    "blockList": "Список блоков",
+    "fullscreen": "Полный экран",
+    "help": "Эта справка",
+    "pick": "Выбрать блок",
+    "measure": "Измерить область",
+    "clear": "Снять выделение",
+    "keys": {
+      "wheel": "Колесо",
+      "click": "Клик",
+      "drag": "Перетащить"
+    }
+  },
+  "errors": {
+    "download": "Не удалось скачать файл: сервер недоступен или не разрешает чтение с других сайтов (CORS). Подойдут raw.githubusercontent.com, gist, Discord CDN — или откройте файл с диска.",
+    "notFound": "Файл не найден (404).",
+    "http": "Сервер ответил {{status}}.",
+    "notSchematic": "Не схематика: {{reason}}",
+    "noField": "Нет поля {{name}} — это не схематика MCEdit",
+    "empty": "Пустая схематика",
+    "noBlocks": "Нет массива Blocks",
+    "blocksSize": "Размер Blocks {{size}} не равен {{width}}×{{height}}×{{length}}",
+    "gzip": "Файл повреждён: не удалось распаковать gzip",
+    "texture": "Не загрузилась текстура {{url}}"
+  },
+  "warnings": {
+    "materials": "Materials = \"{{materials}}\", ожидалось \"Alpha\"",
+    "addBlocks": "В схематике есть AddBlocks (id > 255) — они не поддерживаются, старшие биты отброшены",
+    "noData": "Нет массива Data или неверная длина — metadata считается 0"
+  }
+}

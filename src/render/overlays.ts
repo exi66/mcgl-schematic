@@ -48,7 +48,8 @@ function floorLabel(text: string, color: string, size: number): THREE.Sprite {
 }
 
 /** Floor grid under the schematic (y = 0) with a margin and footprint outline (child 'lines'), side labels beyond it (child 'labels'). */
-export function makeGrid(width: number, length: number, dark: boolean): THREE.Group {
+/** Floor grid with the schematic's footprint outlined in `accent` (the theme's primary). */
+export function makeGrid(width: number, length: number, dark: boolean, accent: THREE.Color): THREE.Group {
   const group = new THREE.Group();
   const margin = Math.max(8, Math.round(Math.max(width, length) * 0.25));
   const x0 = -margin,
@@ -64,7 +65,7 @@ export function makeGrid(width: number, length: number, dark: boolean): THREE.Gr
   const labelGroup = new THREE.Group();
   labelGroup.name = 'labels';
   group.add(lineGroup, labelGroup);
-  const lines = (pts: number[], color: number, opacity: number) => {
+  const lines = (pts: number[], color: THREE.ColorRepresentation, opacity: number) => {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
     const l = new THREE.LineSegments(
@@ -103,7 +104,7 @@ export function makeGrid(width: number, length: number, dark: boolean): THREE.Gr
     0,
     0,
   ];
-  lineGroup.add(lines(outline, dark ? 0x8fb3ea : 0x2b5fb3, 0.9));
+  lineGroup.add(lines(outline, accent, 0.9));
   // Side labels a little beyond the footprint.
   const size = Math.max(1.2, Math.min(6, margin * 0.35));
   const off = margin * 0.45;

@@ -1,6 +1,7 @@
 // three.js scene for a schematic: chunked block meshes, instanced models, ghost blocks, cameras and navigation
 // modes (orbit / plan / explore), slicing, floor grid, measuring and picking.
 
+import i18next from 'i18next';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { BLOCKS, MODEL_NAMES, variantKey } from '../blocks/pool';
@@ -10,6 +11,7 @@ import type { GeoArrays } from './geometry';
 import { meshRegion, type ModelInstance, type Voxels } from './mesher';
 import { buildModelGeometry, modelRotationDeg, parseModel } from './model';
 import { CANVAS_FONT, disposeObject, makeGrid, makeMeasureBox, type Cell } from './overlays';
+import { accentColor } from './theme-color';
 import { pickVoxel, type PickHit } from './pick';
 import { makeStubAtlas } from './stubs';
 import { AtlasAnimator } from './texfx';
@@ -71,7 +73,7 @@ function loadTexture(url: string): Promise<THREE.Texture> {
       url,
       (t) => resolve(pixelTexture(t)),
       undefined,
-      () => reject(new Error(`Не загрузилась текстура ${url}`)),
+      () => reject(new Error(i18next.t('errors.texture', { url }))),
     );
   });
 }
@@ -141,6 +143,8 @@ export class Viewer {
   private measureObj?: THREE.Group;
   private selectObj?: THREE.LineSegments;
   private hoverBox?: THREE.LineSegments;
+  private hoverCell: Cell | null = null;
+  private selectedCell: Cell | null = null;
   private materials?: Materials;
   private models = new Map<string, LoadedModel>();
   private ready: Promise<void>;
@@ -296,6 +300,8 @@ export class Viewer {
       }
     }
     if (prev.dark !== d.dark || !this.grid) this.rebuildGrid();
+    if (prev.dark !== d.dark && this.selectObj)
+      (this.selectObj.material as THREE.LineBasicMaterial).color.copy(accentColor(d.dark));
     this.applyGridVisibility();
     this.requestRender();
   }
@@ -586,7 +592,7 @@ export class Viewer {
     const img = new Image();
     img.src = url;
     await img.decode().catch(() => {
-      throw new Error(`Не загрузилась текстура ${url}`);
+      throw new Error(i18next.t('errors.texture', { url }));
     });
     const canvas = document.createElement('canvas');
     canvas.width = img.width;
@@ -638,7 +644,12 @@ export class Viewer {
       this.grid = undefined;
     }
     if (!this.schematic) return;
-    this.grid = makeGrid(this.schematic.width, this.schematic.length, this.display.dark);
+    this.grid = makeGrid(
+      this.schematic.width,
+      this.schematic.length,
+      this.display.dark,
+      accentColor(this.display.dark),
+    );
     this.scene.add(this.grid);
     this.applyGridVisibility();
     this.requestRender();
@@ -817,7 +828,7 @@ export class Viewer {
     );
   }
 
-  private outline(color: number, size = 1.004): THREE.LineSegments {
+  private outline(color: THREE.ColorRepresentation, size = 1.004): THREE.LineSegments {
     const geo = new THREE.EdgesGeometry(new THREE.BoxGeometry(size, size, size));
     const l = new THREE.LineSegments(
       geo,
@@ -829,15 +840,26 @@ export class Viewer {
   }
 
   setHover(pos: Cell | null): void {
+    this.hoverCell = pos;
     this.hoverBox ??= this.outline(0xffffff);
-    this.hoverBox.visible = pos !== null;
+    this.syncHoverBox();
     if (pos) this.hoverBox.position.set(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5);
     this.requestRender();
   }
 
+  /** The hover outline is hidden over the selected block: its own outline already marks it. */
+  private syncHoverBox(): void {
+    if (!this.hoverBox) return;
+    const h = this.hoverCell,
+      s = this.selectedCell;
+    this.hoverBox.visible = h !== null && !(s && h.x === s.x && h.y === s.y && h.z === s.z);
+  }
+
   setSelected(pos: Cell | null): void {
-    this.selectObj ??= this.outline(0x4da3ff, 1.02);
+    this.selectedCell = pos;
+    this.selectObj ??= this.outline(accentColor(this.display.dark), 1.02);
     this.selectObj.visible = pos !== null;
+    this.syncHoverBox();
     if (pos) this.selectObj.position.set(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5);
     this.requestRender();
   }

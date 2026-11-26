@@ -1,5 +1,6 @@
 import { FolderOpen, Moon, PanelLeftClose, PanelLeftOpen, Sun } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { loadFromFile, loadFromUrl } from './app/load';
 import { appRoot, readUrlState, viewLink } from './app/url';
 import type { CameraPose, DisplayState, NavMode, SliceState, ViewState } from './render/viewer';
@@ -18,55 +19,20 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { useDarkTheme } from '@/hooks/use-dark-theme';
+import { useStored } from '@/hooks/use-stored';
+import { APP_NAME } from '@/lib/app';
+import { z } from 'zod';
+import { CubeLogo } from './components/CubeLogo';
 
-const APP_NAME = 'mcgl-schematic';
 const EXAMPLE = `${import.meta.env.BASE_URL}examples/all-blocks.schematic`;
 const initial = readUrlState();
 
-/**
- * Keys are prefixed with the app name: every project of exi66.github.io shares one localStorage. The theme key is
- * shared on purpose (one theme across the projects).
- */
-const storageKey = (key: string) => (key === 'theme-dark' ? key : `${APP_NAME}:${key}`);
-
-/**
- * A setting kept in localStorage. `override` (from the link) wins for this page and is not saved; the third value
- * says it is still in force. Changing the value saves it and ends the override.
- */
-function useStored<T>(key: string, init: T, override?: T): [T, (v: T | ((p: T) => T)) => void, boolean] {
-  const full = storageKey(key);
-  const [v, setV] = useState<T>(() => {
-    if (override !== undefined) return override;
-    try {
-      let s = localStorage.getItem(full);
-      if (s === null && full !== key && (s = localStorage.getItem(key)) !== null) {
-        // Saved before the prefix: move it.
-        localStorage.setItem(full, s);
-        localStorage.removeItem(key);
-      }
-      if (s !== null) return JSON.parse(s) as T;
-    } catch {
-      /* storage unavailable */
-    }
-    return init;
-  });
-  const [overridden, setOverridden] = useState(override !== undefined);
-  const dirty = useRef(false);
-  useEffect(() => {
-    if (!dirty.current) return;
-    try {
-      localStorage.setItem(full, JSON.stringify(v));
-    } catch {
-      /* ignore */
-    }
-  }, [full, v]);
-  const set = useCallback((n: T | ((p: T) => T)) => {
-    dirty.current = true;
-    setOverridden(false);
-    setV(n);
-  }, []);
-  return [v, set, overridden];
-}
+/** Saved viewer background: a #rrggbb colour, or null for the theme's own. */
+const BACKGROUND = z
+  .string()
+  .regex(/^#[0-9a-f]{6}$/i)
+  .nullable();
 
 /** Where the shown schematic came from: a link, or (no url) a file from disk. */
 interface Source {
@@ -80,11 +46,8 @@ const isTyping = (e: KeyboardEvent) => {
 };
 
 export default function App() {
-  const [dark, setDark, darkFromLink] = useStored(
-    'theme-dark',
-    window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false,
-    initial.dark,
-  );
+  const { t, i18n } = useTranslation();
+  const [dark, setDark, darkFromLink] = useDarkTheme(initial.dark);
   const [schematic, setSchematic] = useState<Schematic | null>(null);
   const [source, setSource] = useState<Source | null>(null);
   const [pose, setPose] = useState<CameraPose | null>(null);
@@ -99,14 +62,17 @@ export default function App() {
   const [slice, setSlice] = useState<SliceState>({ enabled: false, axis: 'y', value: 0, isolate: false });
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
   const [highlight, setHighlight] = useState<string | null>(null);
-  const [grid, setGrid] = useStored('grid', true);
-  const [ortho, setOrtho] = useStored('ortho', false);
-  const [background, setBackground] = useStored<string | null>('background', null);
-  const [animate, setAnimate] = useStored('animate', true);
-  const [labels, setLabels] = useStored('labels', true);
-  const [showFps, setShowFps] = useStored('fps', false);
-  const [hoverTips, setHoverTips] = useStored('hover-tips', false);
-  const [sidebar, setSidebar, sidebarFromLink] = useStored('sidebar', true, initial.list);
+  const [grid, setGrid] = useStored('grid', true, { schema: z.boolean() });
+  const [ortho, setOrtho] = useStored('ortho', false, { schema: z.boolean() });
+  const [background, setBackground] = useStored<string | null>('background', null, { schema: BACKGROUND });
+  const [animate, setAnimate] = useStored('animate', true, { schema: z.boolean() });
+  const [labels, setLabels] = useStored('labels', true, { schema: z.boolean() });
+  const [showFps, setShowFps] = useStored('fps', false, { schema: z.boolean() });
+  const [hoverTips, setHoverTips] = useStored('hover-tips', false, { schema: z.boolean() });
+  const [sidebar, setSidebar, sidebarFromLink] = useStored('sidebar', true, {
+    schema: z.boolean(),
+    override: initial.list,
+  });
   const embed = initial.embed ?? false;
   const [measureMode, setMeasureMode] = useState(false);
   const [exploreLocked, setExploreLocked] = useState(false);
@@ -159,7 +125,7 @@ export default function App() {
   );
   const openFile = useCallback((f: File) => open(() => loadFromFile(f), { name: f.name }), [open]);
 
-  const pageTitle = `${APP_NAME} - ${schematic && source ? source.name : 'Главная'}`;
+  const pageTitle = `${APP_NAME} - ${schematic && source ? source.name : t('app.home')}`;
   useEffect(() => {
     document.title = pageTitle;
   }, [pageTitle]);
@@ -306,7 +272,7 @@ export default function App() {
     setPluginRun(null);
   }, [schematic]);
 
-  const fmt = new Intl.NumberFormat('ru-RU');
+  const fmt = new Intl.NumberFormat(i18n.language);
 
   return (
     <TooltipProvider delay={300}>
@@ -330,13 +296,18 @@ export default function App() {
           <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b bg-card px-3 py-2">
             <div className="flex min-w-0 items-center gap-2">
               {schematic && (
-                <Tip content={sidebar ? 'Скрыть список блоков (M)' : 'Показать список блоков (M)'}>
-                  <Button variant="ghost" size="icon" onClick={() => setSidebar((v) => !v)} aria-label="Список блоков">
+                <Tip content={`${sidebar ? t('app.hideList') : t('app.showList')} (M)`}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSidebar((v) => !v)}
+                    aria-label={t('app.blockList')}
+                  >
                     {sidebar ? <PanelLeftClose /> : <PanelLeftOpen />}
                   </Button>
                 </Tip>
               )}
-              <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="size-6" />
+              <CubeLogo />
               <h1
                 className="truncate text-base font-semibold tracking-tight"
                 title={schematic && source ? (source.url ?? source.name) : undefined}
@@ -346,14 +317,14 @@ export default function App() {
             </div>
             <div className="ml-auto flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setOpenDialog(true)} disabled={loading}>
-                <FolderOpen /> Открыть
+                <FolderOpen /> {t('app.open')}
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setDark((d) => !d)}
-                title={dark ? 'Светлая тема' : 'Тёмная тема'}
-                aria-label="Сменить тему"
+                title={dark ? t('theme.light') : t('theme.dark')}
+                aria-label={t('theme.toggle')}
               >
                 {dark ? <Sun /> : <Moon />}
               </Button>
@@ -368,7 +339,7 @@ export default function App() {
           >
             <span className="flex-1">{error}</span>
             <Button variant="link" size="xs" className="h-auto p-0 text-destructive" onClick={() => setError(null)}>
-              закрыть
+              {t('app.closeError')}
             </Button>
           </div>
         )}
@@ -377,7 +348,9 @@ export default function App() {
           {schematic && sidebar && !fullscreen && (
             <aside className="flex max-h-[38vh] w-full shrink-0 flex-col overflow-hidden border-t bg-sidebar md:max-h-none md:w-80 md:border-t-0 md:border-r">
               <div className="flex items-center gap-3 px-3 pt-3 pb-1">
-                <h2 className="flex-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Блоки</h2>
+                <h2 className="flex-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  {t('app.blocks')}
+                </h2>
                 <ExportMenu list={materials} />
                 {(hidden.size > 0 || highlight !== null) && (
                   <Button
@@ -389,7 +362,7 @@ export default function App() {
                       setHighlight(null);
                     }}
                   >
-                    показать все
+                    {t('app.showAll')}
                   </Button>
                 )}
               </div>
@@ -436,11 +409,14 @@ export default function App() {
                   <div>
                     {schematic.width} × {schematic.height} × {schematic.length}
                   </div>
-                  <div>{fmt.format(nonAir)} блоков</div>
+                  <div>{t('app.blockCount', { count: nonAir, formatted: fmt.format(nonAir) })}</div>
                   {slice.enabled && (
                     <div className="text-primary">
-                      {slice.isolate ? 'Слой' : 'До слоя'} {slice.axis.toUpperCase()} {slice.value + 1} из{' '}
-                      {size[slice.axis]}
+                      {t(slice.isolate ? 'app.sliceLayer' : 'app.sliceUpTo', {
+                        axis: slice.axis.toUpperCase(),
+                        layer: slice.value + 1,
+                        count: size[slice.axis],
+                      })}
                     </div>
                   )}
                 </div>
@@ -502,12 +478,12 @@ export default function App() {
             )}
             {dragging && (
               <div className="pointer-events-none absolute inset-3 z-30 flex items-center justify-center border-2 border-dashed border-primary bg-primary/10 text-lg font-medium text-primary">
-                Отпустите файл .schematic
+                {t('app.dropHere')}
               </div>
             )}
             {loading && schematic && (
               <div className="absolute top-3 left-1/2 z-30 -translate-x-1/2 bg-card px-3 py-1 text-sm shadow">
-                Загрузка…
+                {t('app.loading')}
               </div>
             )}
           </main>
@@ -528,6 +504,7 @@ export default function App() {
 }
 
 function Welcome({ loading, onOpen, onExample }: { loading: boolean; onOpen: () => void; onExample: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-background p-4">
       <div
@@ -538,17 +515,17 @@ function Welcome({ loading, onOpen, onExample }: { loading: boolean; onOpen: () 
       >
         <FolderOpen className="size-10 text-muted-foreground" />
         <div>
-          <p className="text-lg font-semibold">{loading ? 'Загрузка…' : 'Откройте схематику'}</p>
+          <p className="text-lg font-semibold">{loading ? t('app.loading') : t('welcome.title')}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Вставьте ссылку на файл <code>.schematic</code>, выберите его с диска или просто перетащите сюда.
+            <Trans i18nKey="welcome.text" components={{ code: <code /> }} />
           </p>
         </div>
         <div className="flex flex-wrap justify-center gap-2">
           <Button onClick={onOpen} disabled={loading}>
-            Открыть схематику
+            {t('welcome.open')}
           </Button>
           <Button variant="outline" onClick={onExample} disabled={loading}>
-            Пример: все блоки
+            {t('welcome.example')}
           </Button>
         </div>
       </div>

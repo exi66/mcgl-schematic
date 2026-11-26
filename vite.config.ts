@@ -13,5 +13,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['test/**/*.test.ts'],
+    // Translated error messages (schematic parsing) need i18n initialised.
+    setupFiles: ['src/lib/i18n.ts'],
   },
 });

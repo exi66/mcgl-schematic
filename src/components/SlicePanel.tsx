@@ -1,4 +1,5 @@
 import { Eye, EyeOff, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Toggle } from '@/components/ui/toggle';
@@ -21,12 +22,13 @@ export function SlicePanel({
   onChange: (s: SliceState) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const count = size[slice.axis];
   const set = (value: number) => onChange({ ...slice, value: Math.max(0, Math.min(count - 1, value)) });
   return (
     <div className="pointer-events-auto flex w-[96px] flex-col items-stretch gap-2 border bg-card/95 p-1.5 shadow-lg backdrop-blur">
       <ToggleGroup
-        aria-label="Ось среза"
+        aria-label={t('slice.axis')}
         variant="outline"
         className="w-full"
         value={[slice.axis]}
@@ -39,7 +41,7 @@ export function SlicePanel({
           <ToggleGroupItem
             key={a}
             value={a}
-            title={a === 'y' ? 'Срез по Y (слои)' : `Срез по ${a.toUpperCase()}`}
+            title={a === 'y' ? t('slice.byY') : t('slice.byAxis', { axis: a.toUpperCase() })}
             className={`${small} aria-pressed:bg-primary aria-pressed:text-primary-foreground`}
           >
             {a}
@@ -48,7 +50,7 @@ export function SlicePanel({
       </ToggleGroup>
       <div className="text-center">
         <div className="text-2xl leading-none font-semibold tabular-nums">{slice.value + 1}</div>
-        <div className="mt-0.5 text-[11px] text-muted-foreground">из {count}</div>
+        <div className="mt-0.5 text-[11px] text-muted-foreground">{t('slice.of', { count })}</div>
       </div>
       <div className="flex h-48 justify-center">
         <Slider
@@ -58,25 +60,25 @@ export function SlicePanel({
           step={1}
           value={slice.value}
           onValueChange={(v) => set(Array.isArray(v) ? v[0] : (v as number))}
-          aria-label="Положение среза"
+          aria-label={t('slice.position')}
         />
       </div>
       <div className="flex gap-1">
-        <Tip content="Предыдущий слой [">
-          <Button variant="outline" className={small} onClick={() => set(slice.value - 1)} aria-label="Предыдущий слой">
+        <Tip content={`${t('slice.prev')} [`}>
+          <Button variant="outline" className={small} onClick={() => set(slice.value - 1)} aria-label={t('slice.prev')}>
             [
           </Button>
         </Tip>
-        <Tip content="Следующий слой ]">
-          <Button variant="outline" className={small} onClick={() => set(slice.value + 1)} aria-label="Следующий слой">
+        <Tip content={`${t('slice.next')} ]`}>
+          <Button variant="outline" className={small} onClick={() => set(slice.value + 1)} aria-label={t('slice.next')}>
             ]
           </Button>
         </Tip>
       </div>
-      <Tip content={slice.isolate ? 'Показывать всё до среза (I)' : 'Только этот слой, под ним — подложка (I)'}>
+      <Tip content={`${slice.isolate ? t('slice.showAll') : t('slice.isolateTip')} (I)`}>
         <Toggle
           variant="outline"
-          aria-label="Изолировать слой"
+          aria-label={t('slice.isolate')}
           pressed={slice.isolate}
           onPressedChange={(isolate) => onChange({ ...slice, isolate })}
           className={`${small} aria-pressed:bg-primary aria-pressed:text-primary-foreground`}
@@ -84,8 +86,8 @@ export function SlicePanel({
           {slice.isolate ? <EyeOff /> : <Eye />}
         </Toggle>
       </Tip>
-      <Tip content="Закрыть срез (L)">
-        <Button variant="outline" className={small} aria-label="Закрыть срез" onClick={onClose}>
+      <Tip content={`${t('slice.close')} (L)`}>
+        <Button variant="outline" className={small} aria-label={t('slice.close')} onClick={onClose}>
           <X />
         </Button>
       </Tip>

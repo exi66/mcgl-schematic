@@ -1,5 +1,6 @@
 import { FileUp, Link2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { canPickFile, pickSchematicFile } from '../app/pick-file';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ export function OpenDialog({
   onError: (message: string) => void;
   loading: boolean;
 }) {
+  const { t } = useTranslation();
   const [url, setUrl] = useState('');
   const [over, setOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -44,8 +46,8 @@ export function OpenDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="gap-0 sm:max-w-[520px]">
         <DialogHeader className="mb-5">
-          <DialogTitle>Открыть схематику</DialogTitle>
-          <DialogDescription>Ссылка на файл .schematic или файл с диска.</DialogDescription>
+          <DialogTitle>{t('open.title')}</DialogTitle>
+          <DialogDescription>{t('open.description')}</DialogDescription>
         </DialogHeader>
         <form
           className="flex flex-col gap-2"
@@ -57,7 +59,7 @@ export function OpenDialog({
             onOpenChange(false);
           }}
         >
-          <Label htmlFor="open-url">Ссылка</Label>
+          <Label htmlFor="open-url">{t('open.link')}</Label>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Link2 className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -72,18 +74,15 @@ export function OpenDialog({
               />
             </div>
             <Button type="submit" disabled={loading || !url.trim()}>
-              Открыть
+              {t('open.submit')}
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Сервер должен разрешать чтение с других сайтов (CORS): подойдут raw.githubusercontent.com, gist, Discord
-            CDN.
-          </p>
+          <p className="text-xs text-muted-foreground">{t('open.corsHint')}</p>
         </form>
 
         <div className="my-5 flex items-center gap-3 text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
           <Separator className="flex-1" />
-          или
+          {t('open.or')}
           <Separator className="flex-1" />
         </div>
 
@@ -121,7 +120,7 @@ export function OpenDialog({
           )}
         >
           <FileUp className="size-7 text-muted-foreground" />
-          <span className="text-sm font-medium">Выберите файл или перетащите его сюда</span>
+          <span className="text-sm font-medium">{t('open.dropzone')}</span>
           <span className="text-xs text-muted-foreground">.schematic (MCEdit)</span>
         </button>
 
@@ -135,7 +134,7 @@ export function OpenDialog({
               onOpenChange(false);
             }}
           >
-            Открыть пример со всеми блоками
+            {t('open.example')}
           </Button>
         </div>
       </DialogContent>

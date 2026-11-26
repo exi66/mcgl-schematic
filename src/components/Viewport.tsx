@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { type ReactNode, forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { blockDef, blockDescription, blockName } from '../blocks/pool';
 import type { Cell } from '../render/overlays';
@@ -96,6 +97,7 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
   const viewerRef = useRef<Viewer | null>(null);
   const shownRef = useRef<Schematic | null>(null);
   const [hover, setHover] = useState<(BlockAt & { px: number; py: number }) | null>(null);
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<BlockAt | null>(null);
   const [measure, setMeasure] = useState<{ a: Cell; b: Cell } | null>(null);
   const [locked, setLocked] = useState(false);
@@ -308,8 +310,8 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
           <div className="pointer-events-none absolute top-1/2 left-1/2 size-4 -translate-x-1/2 -translate-y-1/2 before:absolute before:top-1/2 before:left-0 before:h-0.5 before:w-full before:-translate-y-1/2 before:bg-white/80 after:absolute after:top-0 after:left-1/2 after:h-full after:w-0.5 after:-translate-x-1/2 after:bg-white/80" />
           {ex && camPos && (
             <div className="pointer-events-none absolute top-3 left-3 z-10 border bg-card/90 px-2.5 py-1.5 text-xs leading-5 tabular-nums shadow-sm backdrop-blur">
-              {ex.flying ? `Полёт · скорость ${ex.speed.toFixed(0)}` : 'Ходьба'} · {camPos.x.toFixed(1)}{' '}
-              {camPos.y.toFixed(1)} {camPos.z.toFixed(1)}
+              {ex.flying ? t('viewport.flying', { speed: ex.speed.toFixed(0) }) : t('viewport.walking')} ·{' '}
+              {camPos.x.toFixed(1)} {camPos.y.toFixed(1)} {camPos.z.toFixed(1)}
             </div>
           )}
           {hoverTips && lookAt && schematic && (
@@ -327,10 +329,8 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
           onClick={() => v?.lockExplore()}
         >
           <span className="border bg-card/95 px-7 py-4 text-center shadow-lg">
-            <span className="block text-sm font-semibold">Кликните, чтобы осмотреться</span>
-            <span className="mt-1 block text-xs text-muted-foreground">
-              Чтобы выйти из обзора, переключите режим на панели ниже.
-            </span>
+            <span className="block text-sm font-semibold">{t('viewport.clickToLook')}</span>
+            <span className="mt-1 block text-xs text-muted-foreground">{t('viewport.leaveExplore')}</span>
           </span>
         </button>
       )}
@@ -340,6 +340,7 @@ export const Viewport = forwardRef<ViewportHandle, Props>(function Viewport(
 
 /** Controls hint shown in place of the toolbar while the explore mode holds the mouse (as in shulkr). */
 function ExploreHint({ flying }: { flying: boolean }) {
+  const { t } = useTranslation();
   const rows: [React.ReactNode, string][] = [
     [
       <>
@@ -348,27 +349,27 @@ function ExploreHint({ flying }: { flying: boolean }) {
         <Kbd>S</Kbd>
         <Kbd>D</Kbd>
       </>,
-      flying ? 'Лететь' : 'Идти',
+      flying ? t('explore.fly') : t('explore.walk'),
     ],
-    [<Kbd>Мышь</Kbd>, 'Смотреть'],
-    [<Kbd>Space</Kbd>, flying ? 'Вверх' : 'Прыжок'],
-    [<Kbd>⇧</Kbd>, flying ? 'Вниз' : 'Присесть'],
+    [<Kbd>{t('explore.mouse')}</Kbd>, t('explore.look')],
+    [<Kbd>Space</Kbd>, flying ? t('explore.up') : t('explore.jump')],
+    [<Kbd>⇧</Kbd>, flying ? t('explore.down') : t('explore.sneak')],
     [
       <>
         <Kbd>Space</Kbd>
         <Kbd>Space</Kbd>
       </>,
-      flying ? 'Приземлиться' : 'Взлететь',
+      flying ? t('explore.land') : t('explore.takeOff'),
     ],
     [
       <>
         <Kbd>W</Kbd>
         <Kbd>W</Kbd>
       </>,
-      'Бег',
+      t('explore.sprint'),
     ],
-    ...(flying ? ([[<Kbd>Колесо</Kbd>, 'Скорость полёта']] as [React.ReactNode, string][]) : []),
-    [<Kbd>Esc</Kbd>, 'Отпустить мышь'],
+    ...(flying ? ([[<Kbd>{t('explore.wheel')}</Kbd>, t('explore.flySpeed')]] as [React.ReactNode, string][]) : []),
+    [<Kbd>Esc</Kbd>, t('explore.releaseMouse')],
   ];
   return (
     <div className="pointer-events-none absolute bottom-3 left-1/2 z-20 max-w-[calc(100%-24px)] -translate-x-1/2 border bg-card/95 px-4 py-2.5 text-xs shadow-lg backdrop-blur">
@@ -385,6 +386,7 @@ function ExploreHint({ flying }: { flying: boolean }) {
 }
 
 function MeasureCard({ a, b, schematic, onClose }: { a: Cell; b: Cell; schematic: Schematic; onClose: () => void }) {
+  const { t, i18n } = useTranslation();
   const x0 = Math.min(a.x, b.x),
     x1 = Math.max(a.x, b.x);
   const y0 = Math.min(a.y, b.y),
@@ -398,7 +400,7 @@ function MeasureCard({ a, b, schematic, onClose }: { a: Cell; b: Cell; schematic
   for (let y = y0; y <= y1; y++)
     for (let z = z0; z <= z1; z++)
       for (let x = x0; x <= x1; x++) if (schematic.blocks[blockIndex(schematic, x, y, z)] !== 0) inside++;
-  const fmt = new Intl.NumberFormat('ru-RU');
+  const fmt = new Intl.NumberFormat(i18n.language);
   return (
     <div className="absolute top-3 left-3 z-10 w-56 border bg-card/95 text-sm shadow-lg backdrop-blur">
       <div className="flex items-start justify-between gap-2 border-b px-3 py-2.5">
@@ -406,22 +408,28 @@ function MeasureCard({ a, b, schematic, onClose }: { a: Cell; b: Cell; schematic
           <div className="font-semibold">
             {w} × {h} × {l}
           </div>
-          <div className="text-xs text-muted-foreground">{fmt.format(w * h * l)} клеток</div>
+          <div className="text-xs text-muted-foreground">
+            {t('measure.cells', { count: w * h * l, formatted: fmt.format(w * h * l) })}
+          </div>
         </div>
         <Button
           variant="ghost"
           size="icon-xs"
           className="-mr-1 text-muted-foreground"
           onClick={onClose}
-          aria-label="Убрать измерение"
+          aria-label={t('measure.close')}
         >
           <X />
         </Button>
       </div>
       <div className="px-3 py-2.5">
-        <div className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">Блоков внутри</div>
+        <div className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+          {t('measure.blocksInside')}
+        </div>
         <div className="mt-0.5">{fmt.format(inside)}</div>
-        <div className="mt-2 text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">От — до</div>
+        <div className="mt-2 text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+          {t('measure.range')}
+        </div>
         <div className="mt-0.5 text-xs">
           {x0} {y0} {z0} → {x1} {y1} {z1}
         </div>
@@ -436,6 +444,7 @@ function hoverStyle(h: { px: number; py: number }): React.CSSProperties {
 }
 
 function HoverCard({ block, style }: { block: BlockAt; style?: React.CSSProperties }) {
+  const { t } = useTranslation();
   return (
     <div
       className="pointer-events-none z-10 flex max-w-72 items-center gap-2.5 border bg-card/95 px-3 py-2 text-xs shadow-lg backdrop-blur"
@@ -448,15 +457,16 @@ function HoverCard({ block, style }: { block: BlockAt; style?: React.CSSProperti
           ID: {block.id}:{block.meta}
         </div>
         <div className="leading-5 text-muted-foreground tabular-nums">
-          Положение: {block.x}, {block.y}, {block.z}
+          {t('block.position', { x: block.x, y: block.y, z: block.z })}
         </div>
-        {!blockDef(block.id) && <div className="mt-1 text-muted-foreground">Нет в пуле — показан заглушкой</div>}
+        {!blockDef(block.id) && <div className="mt-1 text-muted-foreground">{t('block.stubShort')}</div>}
       </div>
     </div>
   );
 }
 
 function InfoCard({ block, actions, onClose }: { block: BlockAt; actions: CardAction[]; onClose: () => void }) {
+  const { t } = useTranslation();
   const desc = blockDescription(block.id, block.meta);
   return (
     <div className="border bg-card/95 p-3 text-xs shadow-lg backdrop-blur">
@@ -468,7 +478,7 @@ function InfoCard({ block, actions, onClose }: { block: BlockAt; actions: CardAc
             ID: {block.id}:{block.meta}
           </div>
           <div className="leading-5 text-muted-foreground tabular-nums">
-            Положение: {block.x}, {block.y}, {block.z}
+            {t('block.position', { x: block.x, y: block.y, z: block.z })}
           </div>
         </div>
         <Button
@@ -476,15 +486,13 @@ function InfoCard({ block, actions, onClose }: { block: BlockAt; actions: CardAc
           size="icon-xs"
           className="-mr-1 self-start text-muted-foreground"
           onClick={onClose}
-          aria-label="Снять выделение"
+          aria-label={t('block.deselect')}
         >
           <X />
         </Button>
       </div>
       {desc && <div className="mt-2 leading-relaxed text-muted-foreground">{desc}</div>}
-      {!blockDef(block.id) && (
-        <div className="mt-2 text-muted-foreground">Блок пока не поддерживается — показан заглушкой.</div>
-      )}
+      {!blockDef(block.id) && <div className="mt-2 text-muted-foreground">{t('block.stubLong')}</div>}
       {actions.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {actions.map((a) => (

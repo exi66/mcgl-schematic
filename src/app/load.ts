@@ -1,3 +1,4 @@
+import i18next from 'i18next';
 import { parseSchematic, SchematicError, type Schematic } from '../schematic/schematic';
 
 export class LoadError extends Error {}
@@ -8,13 +9,10 @@ export async function loadFromUrl(url: string, signal?: AbortSignal): Promise<Sc
     res = await fetch(url, { signal });
   } catch (e) {
     if ((e as Error).name === 'AbortError') throw e;
-    throw new LoadError(
-      'Не удалось скачать файл: сервер недоступен или не разрешает чтение с других сайтов (CORS). ' +
-        'Подойдут raw.githubusercontent.com, gist, Discord CDN — или откройте файл с диска.',
-    );
+    throw new LoadError(i18next.t('errors.download'));
   }
-  if (res.status === 404) throw new LoadError('Файл не найден (404).');
-  if (!res.ok) throw new LoadError(`Сервер ответил ${res.status} ${res.statusText}.`);
+  if (res.status === 404) throw new LoadError(i18next.t('errors.notFound'));
+  if (!res.ok) throw new LoadError(i18next.t('errors.http', { status: `${res.status} ${res.statusText}`.trim() }));
   return parseBytes(new Uint8Array(await res.arrayBuffer()));
 }
 
@@ -27,6 +25,6 @@ async function parseBytes(bytes: Uint8Array): Promise<Schematic> {
     return await parseSchematic(bytes);
   } catch (e) {
     if (e instanceof SchematicError) throw new LoadError(e.message);
-    throw new LoadError(`Не схематика: ${(e as Error).message}`);
+    throw new LoadError(i18next.t('errors.notSchematic', { reason: (e as Error).message }));
   }
 }

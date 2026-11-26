@@ -1,70 +1,73 @@
 import type { ReactNode } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
 
-type Row = [string, ReactNode[]];
+type Row = [label: string, keys: ReactNode[]];
 
-const SECTIONS: [string, Row[]][] = [
+const sections = (t: TFunction): [string, Row[]][] => [
   [
-    'Вид',
+    t('hotkeys.sections.view'),
     [
-      ['Вращение', ['1']],
-      ['План (сверху)', ['2']],
-      ['Обзор (ходьба / полёт)', ['3']],
-      ['Сбросить вид', ['R']],
-      ['Срез вкл / выкл', ['L']],
-      ['Повернуть вид', ['Q', 'E']],
-      ['Орто / перспектива', ['O']],
-      ['Сетка на полу', ['G']],
+      [t('hotkeys.orbit'), ['1']],
+      [t('hotkeys.plan'), ['2']],
+      [t('hotkeys.explore'), ['3']],
+      [t('hotkeys.reset'), ['R']],
+      [t('hotkeys.slice'), ['L']],
+      [t('hotkeys.rotate'), ['Q', 'E']],
+      [t('hotkeys.ortho'), ['O']],
+      [t('hotkeys.grid'), ['G']],
     ],
   ],
   [
-    'Срез',
+    t('hotkeys.sections.slice'),
     [
-      ['Следующий слой', [']']],
-      ['Предыдущий слой', ['[']],
-      ['На 10 слоёв', ['⇧', '[', ']']],
-      ['Изолировать слой', ['I']],
+      [t('hotkeys.nextLayer'), [']']],
+      [t('hotkeys.prevLayer'), ['[']],
+      [t('hotkeys.tenLayers'), ['⇧', '[', ']']],
+      [t('hotkeys.isolate'), ['I']],
     ],
   ],
   [
-    'Обзор',
+    t('hotkeys.sections.explore'),
     [
-      ['Идти / лететь', ['W', 'A', 'S', 'D']],
-      ['Прыжок / вверх', ['Space']],
-      ['Полёт ↔ ходьба', ['Space', 'Space']],
-      ['Присесть (не упасть с края) / вниз', ['⇧']],
-      ['Бег (двойное вперёд)', ['W', 'W']],
-      ['Скорость полёта', ['Колесо']],
-      ['Отпустить мышь', ['Esc']],
+      [t('hotkeys.move'), ['W', 'A', 'S', 'D']],
+      [t('hotkeys.jump'), ['Space']],
+      [t('hotkeys.flyWalk'), ['Space', 'Space']],
+      [t('hotkeys.sneak'), ['⇧']],
+      [t('hotkeys.sprint'), ['W', 'W']],
+      [t('hotkeys.flySpeed'), [t('hotkeys.keys.wheel')]],
+      [t('hotkeys.releaseMouse'), ['Esc']],
     ],
   ],
   [
-    'Панели и выделение',
+    t('hotkeys.sections.panels'),
     [
-      ['Список блоков', ['M']],
-      ['Полный экран', ['F']],
-      ['Эта справка', ['?']],
-      ['Выбрать блок', ['Клик']],
-      ['Измерить область', ['⇧', 'Перетащить']],
-      ['Снять выделение', ['Esc']],
+      [t('hotkeys.blockList'), ['M']],
+      [t('hotkeys.fullscreen'), ['F']],
+      [t('hotkeys.help'), ['?']],
+      [t('hotkeys.pick'), [t('hotkeys.keys.click')]],
+      [t('hotkeys.measure'), ['⇧', t('hotkeys.keys.drag')]],
+      [t('hotkeys.clear'), ['Esc']],
     ],
   ],
 ];
 
 export function HotkeysDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] gap-0 overflow-y-auto p-0 sm:max-w-[760px]">
         <DialogHeader className="border-b px-5 py-4">
-          <DialogTitle>Горячие клавиши</DialogTitle>
+          <DialogTitle>{t('hotkeys.title')}</DialogTitle>
           <DialogDescription>
-            Нажмите <Kbd>?</Kbd>, чтобы открыть снова.
+            <Trans i18nKey="hotkeys.reopen" components={{ kbd: <Kbd /> }} />
           </DialogDescription>
         </DialogHeader>
         <div className="px-5 pt-5 pb-6">
           <div className="grid gap-x-10 gap-y-7 sm:grid-cols-2">
-            {SECTIONS.map(([title, rows]) => (
+            {sections(t).map(([title, rows]) => (
               <section key={title}>
                 <h3 className="mb-3 border-b pb-1.5 text-[11px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
                   {title}

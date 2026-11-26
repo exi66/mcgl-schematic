@@ -46,7 +46,19 @@ export interface DisplayState {
   labels: boolean;
 }
 
+/** Camera for a link: where it stands and the point it looks at (orbit and plan: the pivot). */
+export interface CameraPose {
+  pos: [number, number, number];
+  at: [number, number, number];
+  /** Plan only: screen-up turned from −X by this many quarter turns (Q / E). */
+  rot?: number;
+}
+
 type Visibility = 0 | 1 | 2; // hidden, normal, ghost
+
+const UP = new THREE.Vector3(0, 1, 0);
+const PLAN_UP = new THREE.Vector3(-1, 0, 0);
+const xyz = (v: THREE.Vector3): [number, number, number] => [v.x, v.y, v.z];
 
 const CHUNK = 32;
 const GHOST_OPACITY = 0.22;
@@ -139,6 +151,8 @@ export class Viewer {
   private loop = 0;
   private lastTime = 0;
   private disposed = false;
+  /** The camera is where fit() put it (not moved since): links leave it out. */
+  private atFit = false;
   private readonly resizeObserver: ResizeObserver;
   onCameraChange?: () => void;
   onExploreLock?: (locked: boolean) => void;
@@ -187,6 +201,7 @@ export class Viewer {
       });
       // Mouse look changes only the rotation: redraw right away, not just when the player moves.
       ex.onChange = () => {
+        this.atFit = false;
         this.requestRender();
         this.onCameraChange?.();
       };
@@ -215,6 +230,7 @@ export class Viewer {
       c.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
     }
     c.addEventListener('change', () => {
+      this.atFit = false;
       this.requestRender();
       this.onCameraChange?.();
     });
@@ -232,6 +248,7 @@ export class Viewer {
     const prevCam = this.camera;
     const prevTarget = this.controls?.target.clone();
     this.mode = mode;
+    this.atFit = false; // fit() below sets it again
     if (mode === 'explore') {
       // Start from where the orbit camera looked from.
       this.persp.position.copy(prevCam.position);
@@ -369,6 +386,76 @@ export class Viewer {
       if (this.display.ortho) this.syncOrthoFromPersp();
     }
     this.controls?.update();
+    this.atFit = true;
+    this.requestRender();
+    this.onCameraChange?.();
+  }
+
+  /** The camera for a link; null while it stays where fit() put it. */
+  cameraPose(): CameraPose | null {
+    if (this.atFit || !this.schematic) return null;
+    const fovTan = Math.tan(THREE.MathUtils.degToRad(this.persp.fov / 2));
+    if (this.mode === 'explore') {
+      const dir = this.persp.getWorldDirection(new THREE.Vector3());
+      return { pos: xyz(this.persp.position), at: xyz(this.persp.position.clone().add(dir)) };
+    }
+    const target = this.controls?.target ?? new THREE.Vector3();
+    if (this.mode === 'plan') {
+      // As the perspective camera straight above that would show the same area.
+      const halfH = (this.plan.top - this.plan.bottom) / 2 / this.plan.zoom;
+      let rot = 0;
+      for (let k = 1; k < 4; k++) {
+        const up = PLAN_UP.clone().applyAxisAngle(UP, (k * Math.PI) / 2);
+        if (up.dot(this.plan.up) > 0.5) rot = k;
+      }
+      return { pos: [target.x, target.y + halfH / fovTan, target.z], at: xyz(target), rot };
+    }
+    if (this.camera === this.orbitOrtho) {
+      const o = this.orbitOrtho;
+      const dist = (o.top - o.bottom) / 2 / o.zoom / fovTan;
+      const dir = o.position.clone().sub(target).normalize();
+      return { pos: xyz(target.clone().addScaledVector(dir, dist)), at: xyz(target) };
+    }
+    return { pos: xyz(this.persp.position), at: xyz(target) };
+  }
+
+  /** Puts the camera as in a link (see cameraPose). */
+  applyPose(p: CameraPose): void {
+    const s = this.schematic;
+    if (!s) return;
+    const pos = new THREE.Vector3(...p.pos);
+    const at = new THREE.Vector3(...p.at);
+    const dist = Math.max(0.1, pos.distanceTo(at));
+    const fovTan = Math.tan(THREE.MathUtils.degToRad(this.persp.fov / 2));
+    if (this.mode === 'explore') {
+      this.persp.position.copy(pos);
+      this.persp.lookAt(at);
+      this.persp.updateMatrixWorld();
+      this.explore?.placeFromCamera();
+    } else if (this.mode === 'plan') {
+      const halfH = dist * fovTan;
+      const aspect = this.aspect();
+      this.plan.up.copy(PLAN_UP).applyAxisAngle(UP, ((p.rot ?? 0) * Math.PI) / 2);
+      this.plan.position.set(at.x, s.height + 100, at.z);
+      this.plan.lookAt(at.x, 0, at.z);
+      this.plan.zoom = 1;
+      this.plan.top = halfH;
+      this.plan.bottom = -halfH;
+      this.plan.left = -halfH * aspect;
+      this.plan.right = halfH * aspect;
+      this.plan.updateProjectionMatrix();
+      this.controls?.target.set(at.x, 0, at.z);
+    } else {
+      this.persp.position.copy(pos);
+      this.persp.near = Math.max(0.05, dist / 2000);
+      this.persp.far = Math.max(dist, Math.hypot(s.width, s.height, s.length)) * 20;
+      this.persp.updateProjectionMatrix();
+      this.persp.lookAt(at);
+      this.controls?.target.copy(at);
+      if (this.display.ortho) this.syncOrthoFromPersp();
+    }
+    this.controls?.update();
+    this.atFit = false;
     this.requestRender();
     this.onCameraChange?.();
   }
